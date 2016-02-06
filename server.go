@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"gopkg.in/macaron.v1"
-	"time"
+
 	"wxBot/bot"
 )
 
@@ -15,6 +14,11 @@ type RegisterResponse struct {
 	Code       int64
 	HookMethod string
 	HookUrl    string
+}
+
+type LogsResponse struct {
+	Code int64
+	Logs []string
 }
 
 func main() {
@@ -45,15 +49,23 @@ func main() {
 		}
 		ctx.JSON(200, &response)
 	})
+	m.Get("/:sessionId/logs", func(ctx *macaron.Context) {
+		bot, ok := bots[ctx.Params(":sessionId")]
+		response := LogsResponse{}
+		if ok {
+			response.Code = 0
+			response.Logs = bot.Logs
+		} else {
+			response.Code = 400
+		}
+		ctx.JSON(200, &response)
+	})
 	m.Run()
 }
 
 func startLogin(bot *bot.WeixinBot) {
 	// 等待登陆
-	for code := bot.WaitForLogin(); code != "200"; code = bot.WaitForLogin() {
-		fmt.Println(code)
-		time.Sleep(time.Second * 3)
-	}
+	bot.WaitForLogin()
 	// 登陆
 	bot.Login()
 	// 初始化信息

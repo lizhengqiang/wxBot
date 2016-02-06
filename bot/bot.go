@@ -42,10 +42,24 @@ type WeixinBot struct {
 	SyncKeyString string
 
 	hooks map[string]string
+
+	Logs []string
 }
 
 func (bot *WeixinBot) timestamp() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
+
+}
+
+// 记录一条日志
+func (bot *WeixinBot) log(format string, v ...interface{}) {
+	if len(v) > 0 {
+		fmt.Printf(format+"\n", v)
+		bot.Logs = append(bot.Logs, fmt.Sprintf(format, v))
+	} else {
+		fmt.Printf(format + "\n")
+		bot.Logs = append(bot.Logs, fmt.Sprintf(format))
+	}
 
 }
 
@@ -91,7 +105,7 @@ func (bot *WeixinBot) Start() {
 
 	resp, err := bot.HttpClient.PostForm("https://login.weixin.qq.com/jslogin", url.Values{"appid": {"wx782c26e4c19acffb"}, "fun": {"new"}, "lang": {"zh_CN"}, "_": {bot.timestamp()}})
 	if err != nil {
-		panic("请求jslogin出现错误")
+		bot.log(err.Error())
 	}
 
 	defer resp.Body.Close()
@@ -107,45 +121,55 @@ func (bot *WeixinBot) Start() {
 			panic("请求jslogin返回!200")
 		}
 	}
+
+	bot.log("执行Start成功, uuid is %s.", bot.UUID)
 }
 
 func (bot *WeixinBot) GetQrcodeUrl() string {
 	return "https://login.weixin.qq.com/qrcode/" + bot.UUID
 }
 
-func (bot *WeixinBot) WaitForLogin() string {
-	resp, err := bot.HttpClient.Get(fmt.Sprintf("https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=%s&uuid=%s&_=%s", bot.Tip, bot.UUID, bot.timestamp()))
-	if err != nil {
-		panic("请求login出现错误")
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	re, _ := regexp.Compile(`window.code=(\d+);`)
-	all := re.FindSubmatch(body)
-	if len(all) >= 2 {
-		code := string(all[1])
-		if code == "201" {
-			bot.Tip = "0"
-			fmt.Println("成功扫描, 请在手机上点击确认以登录")
-		} else if code == "200" {
-			reRedirectUri, _ := regexp.Compile(`window.redirect_uri="(\S+?)";`)
-			allRedirectUri := reRedirectUri.FindSubmatch(body)
-			if len(allRedirectUri) >= 2 {
-				redirectUri := string(allRedirectUri[1])
-				bot.RedirectUri = redirectUri + "&fun=new"
-				bot.BaseUri = string([]byte(bot.RedirectUri)[0:strings.LastIndex(bot.RedirectUri, "/")])
-
+func (bot *WeixinBot) WaitForLogin() {
+	for {
+		// 获取登陆返回值
+		all, body := func() ([][]byte, []byte) {
+			resp, err := bot.HttpClient.Get(fmt.Sprintf("https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=%s&uuid=%s&_=%s", bot.Tip, bot.UUID, bot.timestamp()))
+			if err != nil {
+				bot.log(err.Error())
 			}
-		} else if code == "408" {
-			fmt.Println("请求login超时")
-		} else {
-			panic("请求login返回:" + code)
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			re, _ := regexp.Compile(`window.code=(\d+);`)
+			all := re.FindSubmatch(body)
+			return all, body
+		}()
+
+		if len(all) >= 2 {
+			code := string(all[1])
+			if code == "201" {
+				bot.Tip = "0"
+				bot.log("成功扫描, 请在手机上点击确认以登录. ")
+				continue
+			} else if code == "200" {
+				reRedirectUri, _ := regexp.Compile(`window.redirect_uri="(\S+?)";`)
+				allRedirectUri := reRedirectUri.FindSubmatch(body)
+				if len(allRedirectUri) >= 2 {
+					redirectUri := string(allRedirectUri[1])
+					bot.RedirectUri = redirectUri + "&fun=new"
+					bot.BaseUri = string([]byte(bot.RedirectUri)[0:strings.LastIndex(bot.RedirectUri, "/")])
+
+				}
+				bot.log("登陆成功. ")
+				break
+			} else if code == "408" {
+				bot.log("请求login超时. ")
+			} else {
+				bot.log("请求login返回%s. ", code)
+			}
 		}
-		return code
-	} else {
-		panic("请求login出现错误")
-		return "-1"
+		time.Sleep(time.Second * 3)
 	}
+
 }
 
 type LoginHtml struct {
@@ -174,7 +198,7 @@ func (bot *WeixinBot) Login() {
 	defer resp.Body.Close()
 	doc, htmlErr := html.Parse(resp.Body)
 	if htmlErr != nil {
-		fmt.Println(htmlErr.Error())
+		//fmt.Println(htmlErr.Error())
 	}
 	var f func(*html.Node)
 	f = func(n *html.Node) {
