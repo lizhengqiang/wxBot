@@ -200,7 +200,7 @@ func (bot *WeixinBot) SimplePostJson(uri string, params interface{}) (b []byte, 
 	return body, nil
 }
 
-func (bot *WeixinBot) PostJson(uri string, request interface{}, response *interface{}) {
+func (bot *WeixinBot) PostJson(uri string, request interface{}, response interface{}) {
 	paramsBytes, paramsErr := json.Marshal(request)
 	if paramsErr != nil {
 		return
@@ -219,22 +219,26 @@ func (bot *WeixinBot) PostJson(uri string, request interface{}, response *interf
 	return
 }
 
-func (bot *WeixinBot) GetJson(uri string, request *interface{}, response *interface{}) {
-	var params url.Values
-	if request != nil {
-		var paramsErr error
-		params, paramsErr = query.Values(request)
-		if paramsErr != nil {
-			return
-		}
-	}
+func (bot *WeixinBot) GetJson(uri string, request interface{}, response interface{}) {
+
 	var targetUrl = ""
-	if strings.Contains(uri, `http://`) {
+	if strings.Contains(uri, `http://`) || strings.Contains(uri, `https://`) {
 		targetUrl = uri
 	} else {
 		targetUrl = bot.BaseUri + uri
 	}
-	resp, err := http.Get(targetUrl + "?" + params.Encode())
+	var params url.Values
+	if request != nil {
+		var paramsErr error
+		params, paramsErr = query.Values(request)
+		fmt.Println(params)
+		if paramsErr != nil {
+			return
+		}
+		targetUrl = targetUrl + "?" + params.Encode()
+	}
+	fmt.Println(targetUrl)
+	resp, err := http.Get(targetUrl)
 	if err != nil {
 		return
 	}
@@ -243,6 +247,7 @@ func (bot *WeixinBot) GetJson(uri string, request *interface{}, response *interf
 	if err != nil {
 		return
 	}
+	fmt.Println(string(body))
 	json.Unmarshal(body, response)
 	return
 }
@@ -275,6 +280,15 @@ type InitWebWeixinResponseBody struct {
 	User         *User
 }
 
+func (bot *WeixinBot) saveSyncKey(syncKey *SyncKey) {
+	bot.SyncKey = syncKey
+	syncKeyList := make([]string, bot.SyncKey.Count)
+	for i, v := range bot.SyncKey.List {
+		syncKeyList[i] = strconv.FormatInt(v.Key, 10) + "_" + strconv.FormatInt(v.Val, 10)
+	}
+	bot.SyncKeyString = strings.Join(syncKeyList, "|")
+}
+
 func (bot *WeixinBot) InitWebWeixin() int64 {
 	requestBody := InitWebWeixinRequestBody{
 		BaseRequest: bot.BaseRequest,
@@ -288,12 +302,7 @@ func (bot *WeixinBot) InitWebWeixin() int64 {
 		fmt.Println(errJson.Error())
 	}
 	bot.My = respJson.User
-	bot.SyncKey = respJson.SyncKey
-	syncKeyList := make([]string, bot.SyncKey.Count)
-	for i, v := range bot.SyncKey.List {
-		syncKeyList[i] = strconv.FormatInt(v.Key, 10) + "_" + strconv.FormatInt(v.Val, 10)
-	}
-	bot.SyncKeyString = strings.Join(syncKeyList, "|")
+	bot.saveSyncKey(respJson.SyncKey)
 
 	return respJson.BaseResponse.Ret
 
@@ -333,33 +342,101 @@ func (bot *WeixinBot) WebWeixinStatusNotify() bool {
 	return respJson.BaseResponse.Ret == int64(0)
 }
 
-type SyncCheckRequest struct {
-	r        int64
-	sid      string
-	uin      string
-	skey     string
-	deviceid string
-	synckey  string
-	_        int64
-}
-
 type SyncCheckResponseBody struct {
+	retcode  int64
+	selector int64
 }
 
-func (bot *WeixinBot) SyncCheck() {
-	requestBody := SyncCheckRequest{
-		r:       time.Now().Unix(),
-		sid:     bot.WxSid,
-		uin:     bot.WxUin,
-		skey:    bot.SKey,
-		synckey: bot.SyncKeyString,
-		_:       time.Now().Unix(),
+func (bot *WeixinBot) SyncCheck() (retcode, selector int64) {
+	responseBody := &SyncCheckResponseBody{}
+	deviceId := ""
+	bot.GetJson(fmt.Sprintf("https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck?r=%s&sid=%s&uin=%s&skey=%s&deviceid=%s&synckey=%s&_=%s", bot.timestamp(), bot.WxSid, strconv.FormatInt(bot.WxUin, 10), bot.SKey, deviceId, bot.SyncKeyString, bot.timestamp()), nil, &responseBody)
+	fmt.Println(responseBody)
+	return responseBody.retcode, responseBody.selector
+}
+
+type WebWeixinSyncRequest struct {
+	BaseRequest *BaseRequest
+	SyncKey     *SyncKey
+	rr          int64
+}
+
+type AddMsg struct {
+	MsgType      int64
+	FromUserName string
+	ToUserName   string
+	Content      string
+}
+
+type WebWeixinSyncResponse struct {
+	BaseResponse *BaseResponse
+	SyncKey      *SyncKey
+	AddMsgList   []AddMsg
+}
+
+func (bot *WeixinBot) WebWeixinSync() WebWeixinSyncResponse {
+	request := WebWeixinSyncRequest{
+		BaseRequest: bot.BaseRequest,
+		SyncKey:     bot.SyncKey,
+		rr:          time.Now().Unix(),
 	}
-	var responseBody string
-	bot.GetJson("https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck", &requestBody, &responseBody)
 
+	response := WebWeixinSyncResponse{}
+
+	bot.PostJson(fmt.Sprintf("/webwxsync?sid=%s&skey=%s&pass_ticket=%s", bot.WxSid, bot.SKey, bot.PassTicket), request, &response)
+
+	if response.BaseResponse.Ret == 0 {
+		bot.saveSyncKey(response.SyncKey)
+	}
+
+	return response
 }
 
+func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
+	for _, msg := range msgList {
+		fmt.Println(msg.MsgType, msg.FromUserName, msg.Content, msg.ToUserName)
+	}
+}
+
+func (bot *WeixinBot) ListenMsgMode() {
+	for {
+		retcode, selector := bot.SyncCheck()
+		if retcode == 1100 {
+			fmt.Println("你在手机上登出了微信，债见")
+		} else if retcode == 0 {
+			if selector == 2 {
+				msgList := bot.WebWeixinSync()
+				if msgList.AddMsgList != nil && len(msgList.AddMsgList) > 0 {
+					bot.handleMsg(msgList.AddMsgList)
+				}
+
+			} else if selector == 7 {
+				fmt.Println("你在手机上玩微信被我发现了")
+			} else if selector == 0 {
+				time.Sleep(3 * time.Second)
+			}
+		}
+	}
+}
+
+//def listenMsgMode(self):
+//info("进入消息监听模式")
+//playWeChat = 0
+//while True:
+//[retcode, selector] = self.synccheck()
+//if retcode == '1100':
+//print '[*] 你在手机上登出了微信，债见'
+//break
+//elif retcode == '0':
+//if selector == '2':
+//r = self.webwxsync()
+//if r is not None: self.handleMsg(r)
+//elif selector == '7':
+//playWeChat += 1
+//print '[*] 你在手机上玩微信被我发现了 %d 次' % playWeChat
+//r = self.webwxsync()
+//elif selector == '0':
+//time.sleep(1)
 //def synccheck(self):
 //params = {
 //'r': int(time.time()),

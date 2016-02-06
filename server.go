@@ -32,7 +32,7 @@ func Load(path string, object interface{}) error {
 
 func main() {
 	bot := &bot.WeixinBot{}
-	if true {
+	if len(os.Args) <= 1 || os.Args[1] != "reload" {
 		Load("./bot.obj", bot)
 	}
 
@@ -62,7 +62,9 @@ func main() {
 
 	fmt.Println(bot.WebWeixinStatusNotify())
 
-	fmt.Println(bot)
+	//fmt.Println(bot)
+	bot.ListenMsgMode()
+	bot.SyncCheck()
 
 	Save("./bot.obj", bot)
 }
