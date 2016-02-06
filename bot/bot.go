@@ -598,7 +598,13 @@ func (bot *WeixinBot) SendMsg(Content, UserName string) {
 	}
 	response := SendMsgResponse{}
 	bot.PostJson(fmt.Sprintf("/webwxsendmsg?pass_ticket=%s", bot.PassTicket), request, &response)
-	//fmt.Println(response.BaseResponse.Ret)
+	name := ""
+	if strings.Contains(UserName, "@@") {
+		name = bot.GetGroupName(UserName)
+	} else {
+		name = bot.GetUserRemarkName(UserName)
+	}
+	bot.log("%s->%s", Content, name)
 }
 
 func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
@@ -622,12 +628,12 @@ func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
 				groupName := bot.GetGroupName(groupUserName)
 				hookMessageResponse := bot.hookMessage(userName, content)
 				bot.SendMsg(hookMessageResponse.Content, groupUserName)
-				bot.log("# %s(%s) in %s(%s) -> %s", name, userName, groupName, groupUserName, content)
+				bot.log("%s(%s)->%s", name, groupName, content)
 			} else {
 				name := bot.GetUserRemarkName(msg.FromUserName)
 				hookMessageResponse := bot.hookMessage(msg.FromUserName, msg.Content)
 				bot.SendMsg(hookMessageResponse.Content, hookMessageResponse.UserName)
-				bot.log("# %s(%s) -> %s", name, msg.FromUserName, msg.Content)
+				bot.log("%s->%s", name, msg.Content)
 			}
 		}
 	}

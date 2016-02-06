@@ -21,6 +21,10 @@ type LogsResponse struct {
 	Logs []string
 }
 
+type StatusResponse struct {
+	Code int64
+}
+
 func main() {
 	bots := make(map[string]*bot.WeixinBot)
 	m := macaron.Classic()
@@ -59,6 +63,16 @@ func main() {
 		if ok {
 			response.Code = 0
 			response.Logs = bot.Logs
+		} else {
+			response.Code = 400
+		}
+		ctx.JSON(200, &response)
+	})
+	m.Get("/:sessionId/status", func(ctx *macaron.Context) {
+		_, ok := bots[ctx.Params(":sessionId")]
+		response := StatusResponse{}
+		if ok {
+			response.Code = 0
 		} else {
 			response.Code = 400
 		}
