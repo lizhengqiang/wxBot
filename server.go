@@ -7,6 +7,7 @@ import (
 )
 
 type QRCodeResponse struct {
+	Code      int64
 	QRCodeUrl string
 }
 
@@ -73,6 +74,17 @@ func main() {
 		response := StatusResponse{}
 		if ok {
 			response.Code = 0
+		} else {
+			response.Code = 400
+		}
+		ctx.JSON(200, &response)
+	})
+	m.Get("/:sessionId/qrcode", func(ctx *macaron.Context) {
+		bot, ok := bots[ctx.Params(":sessionId")]
+		response := QRCodeResponse{}
+		if ok {
+			response.Code = 0
+			response.QRCodeUrl = bot.GetQrcodeUrl()
 		} else {
 			response.Code = 400
 		}
