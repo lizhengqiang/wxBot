@@ -228,8 +228,13 @@ func (bot *WeixinBot) GetJson(uri string, request *interface{}, response *interf
 			return
 		}
 	}
-
-	resp, err := http.Get(bot.BaseUri + uri + "?" + params.Encode())
+	var targetUrl = ""
+	if strings.Contains(uri, `http://`) {
+		targetUrl = uri
+	} else {
+		targetUrl = bot.BaseUri + uri
+	}
+	resp, err := http.Get(targetUrl + "?" + params.Encode())
 	if err != nil {
 		return
 	}
@@ -338,6 +343,9 @@ type SyncCheckRequest struct {
 	_        int64
 }
 
+type SyncCheckResponseBody struct {
+}
+
 func (bot *WeixinBot) SyncCheck() {
 	requestBody := SyncCheckRequest{
 		r:       time.Now().Unix(),
@@ -347,7 +355,8 @@ func (bot *WeixinBot) SyncCheck() {
 		synckey: bot.SyncKeyString,
 		_:       time.Now().Unix(),
 	}
-	bot.GetJson()
+	var responseBody string
+	bot.GetJson("https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck", &requestBody, &responseBody)
 
 }
 
