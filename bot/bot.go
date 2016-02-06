@@ -44,18 +44,20 @@ type WeixinBot struct {
 	hooks map[string]string
 
 	Logs []string
+
+	running bool
 }
 
 func (bot *WeixinBot) timestamp() string {
 	return strconv.FormatInt(time.Now().Unix(), 10)
-
 }
 
 // 记录一条日志
 func (bot *WeixinBot) log(format string, v ...interface{}) {
+
 	if len(v) > 0 {
-		fmt.Printf(format+"\n", v)
-		bot.Logs = append(bot.Logs, fmt.Sprintf(format, v))
+		fmt.Printf(format+"\n", v...)
+		bot.Logs = append(bot.Logs, fmt.Sprintf(format, v...))
 	} else {
 		fmt.Printf(format + "\n")
 		bot.Logs = append(bot.Logs, fmt.Sprintf(format))
@@ -64,7 +66,7 @@ func (bot *WeixinBot) log(format string, v ...interface{}) {
 }
 
 func (bot *WeixinBot) fmt() {
-	fmt.Println(bot.UUID)
+	bot.log(bot.UUID)
 }
 
 func (bot *WeixinBot) RegisterHookUrl(hookMethod string, hookUrl string) {
@@ -94,7 +96,33 @@ func (bot *WeixinBot) hookMessage(UserName string, Content string) *HookMessageR
 	return &response
 }
 
+func (bot *WeixinBot) Stop() {
+	bot.running = false
+}
+
 func (bot *WeixinBot) Start() {
+	// 等待登陆
+	if !bot.WaitForLogin() {
+		bot.log("扫描验证码失败. ")
+		return
+	}
+	// 登陆
+	if !bot.Login() {
+		bot.log("登陆失败. ")
+		return
+	}
+	// 初始化信息
+	bot.InitBaseRequest()
+	bot.InitWebWeixin()
+	// 获取联系人列表
+	bot.WebWeixinStatusNotify()
+	bot.GetContact()
+	// 开始监听消息
+	bot.ListenMsgMode()
+}
+
+func (bot *WeixinBot) Init() {
+	bot.running = true
 	bot.hooks = make(map[string]string)
 	bot.DeviceId = "e" + string([]byte(fmt.Sprint(rand.Float64()))[2:17])
 	gCurCookieJar, _ := cookiejar.New(nil)
@@ -129,13 +157,16 @@ func (bot *WeixinBot) GetQrcodeUrl() string {
 	return "https://login.weixin.qq.com/qrcode/" + bot.UUID
 }
 
-func (bot *WeixinBot) WaitForLogin() {
-	for {
+func (bot *WeixinBot) WaitForLogin() bool {
+	for bot.running {
 		// 获取登陆返回值
 		all, body := func() ([][]byte, []byte) {
 			resp, err := bot.HttpClient.Get(fmt.Sprintf("https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?tip=%s&uuid=%s&_=%s", bot.Tip, bot.UUID, bot.timestamp()))
 			if err != nil {
 				bot.log(err.Error())
+			}
+			if resp.Body == nil {
+				return nil, nil
 			}
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
@@ -160,15 +191,17 @@ func (bot *WeixinBot) WaitForLogin() {
 
 				}
 				bot.log("登陆成功. ")
-				break
+				return true
 			} else if code == "408" {
 				bot.log("请求login超时. ")
 			} else {
 				bot.log("请求login返回%s. ", code)
+				return false
 			}
 		}
 		time.Sleep(time.Second * 3)
 	}
+	return false
 
 }
 
@@ -190,15 +223,19 @@ type LoginHtml struct {
 	} `xml:"html"`
 }
 
-func (bot *WeixinBot) Login() {
+func (bot *WeixinBot) Login() bool {
 	resp, err := bot.HttpClient.Get(bot.RedirectUri)
 	if err != nil {
-		panic("请求login出现错误")
+		bot.log(err.Error())
+		return false
+	}
+	if resp.Body == nil {
+		return false
 	}
 	defer resp.Body.Close()
 	doc, htmlErr := html.Parse(resp.Body)
 	if htmlErr != nil {
-		//fmt.Println(htmlErr.Error())
+		bot.log(htmlErr.Error())
 	}
 	var f func(*html.Node)
 	f = func(n *html.Node) {
@@ -224,6 +261,7 @@ func (bot *WeixinBot) Login() {
 		}
 	}
 	f(doc)
+	return true
 }
 
 type BaseRequest struct {
@@ -283,7 +321,7 @@ func (bot *WeixinBot) PostJson(uri string, request interface{}, response interfa
 	if err != nil {
 		return
 	}
-	//fmt.Println(string(body))
+	fmt.Println(string(body))
 	json.Unmarshal(body, response)
 	return
 }
@@ -365,7 +403,7 @@ func (bot *WeixinBot) InitWebWeixin() int64 {
 
 	errJson := json.Unmarshal(respBody, &respJson)
 	if errJson != nil {
-		fmt.Println(errJson.Error())
+		bot.log(errJson.Error())
 	}
 	bot.My = respJson.User
 	bot.saveSyncKey(respJson.SyncKey)
@@ -401,7 +439,7 @@ func (bot *WeixinBot) WebWeixinStatusNotify() bool {
 	errJson := json.Unmarshal(respBody, &respJson)
 
 	if errJson != nil {
-		fmt.Println(errJson.Error())
+		bot.log(errJson.Error())
 	}
 
 	return respJson.BaseResponse.Ret == int64(0)
@@ -411,10 +449,11 @@ type EmptyRequest struct {
 }
 
 type Contact struct {
-	VerifyFlag int64
-	UserName   string
-	RemarkName string
-	NickName   string
+	VerifyFlag  int64
+	UserName    string
+	RemarkName  string
+	NickName    string
+	DisplayName string
 }
 type GetContactResponse struct {
 	MemberList []Contact
@@ -449,7 +488,16 @@ func (bot *WeixinBot) GetUserRemarkName(id string) (name string) {
 			}
 		}
 	}
-	return "未知" + id
+	return "未知"
+}
+
+func (bot *WeixinBot) GetGroupName(id string) (name string) {
+	for _, contact := range bot.GroupList {
+		if contact.UserName == id {
+			return contact.NickName
+		}
+	}
+	return "未知"
 }
 
 type SyncCheckResponseBody struct {
@@ -461,12 +509,12 @@ func (bot *WeixinBot) SyncCheck() (retcode, selector int64) {
 	deviceId := bot.DeviceId
 	resp, err := bot.HttpClient.Get(fmt.Sprintf("https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck?synckey=%s&skey=%s&uin=%s&r=%s&deviceid=%s&sid=%s&_=%s", url.QueryEscape(bot.SyncKeyString), url.QueryEscape(bot.SKey), strconv.FormatInt(bot.WxUin, 10), bot.timestamp(), deviceId, url.QueryEscape(bot.WxSid), bot.timestamp()))
 	if err != nil {
-		fmt.Println(err.Error())
+		bot.log(err.Error())
 	}
 	defer resp.Body.Close()
 	body, bodyErr := ioutil.ReadAll(resp.Body)
 	if bodyErr != nil {
-		fmt.Println(bodyErr.Error())
+		bot.log(bodyErr.Error())
 	}
 
 	re, _ := regexp.Compile(`window.synccheck={retcode:"(\d+)",selector:"(\d+)"}`)
@@ -555,11 +603,11 @@ func (bot *WeixinBot) SendMsg(Content, UserName string) {
 
 func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
 	for _, msg := range msgList {
-		fmt.Println("# New Message Received.")
+		bot.log("# New Message Received.")
 		msgType := msg.MsgType
 
 		if msgType == 51 {
-			fmt.Println("# Received Init Message.")
+			bot.log("# Received Init Message.")
 		} else if msgType == 1 {
 			if msg.ToUserName == "filehelper" {
 
@@ -571,24 +619,25 @@ func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
 				content := strings.Replace(msgContensArray[1], "<br/>", "\n", -1)
 				groupUserName := msg.FromUserName
 				name := bot.GetUserRemarkName(userName)
+				groupName := bot.GetGroupName(groupUserName)
 				hookMessageResponse := bot.hookMessage(userName, content)
 				bot.SendMsg(hookMessageResponse.Content, groupUserName)
-				fmt.Printf("# %s(%s) in %s -> %s\n", name, userName, groupUserName, content)
+				bot.log("# %s(%s) in %s(%s) -> %s", name, userName, groupName, groupUserName, content)
 			} else {
 				name := bot.GetUserRemarkName(msg.FromUserName)
 				hookMessageResponse := bot.hookMessage(msg.FromUserName, msg.Content)
 				bot.SendMsg(hookMessageResponse.Content, hookMessageResponse.UserName)
-				fmt.Printf("# %s(%s) -> %s\n", name, msg.FromUserName, msg.Content)
+				bot.log("# %s(%s) -> %s", name, msg.FromUserName, msg.Content)
 			}
 		}
 	}
 }
 
 func (bot *WeixinBot) ListenMsgMode() {
-	for {
+	for bot.running {
 		retcode, selector := bot.SyncCheck()
 		if retcode == 1100 {
-			fmt.Println("# u logout, bye.")
+			bot.log("# u logout, bye.")
 			return
 		} else if retcode == 0 {
 			if selector == 2 {
@@ -598,7 +647,7 @@ func (bot *WeixinBot) ListenMsgMode() {
 				}
 
 			} else if selector == 7 {
-				fmt.Println("# I found u playing phone.")
+				bot.log("# I found u playing phone.")
 			} else if selector == 0 {
 				time.Sleep(3 * time.Second)
 			}

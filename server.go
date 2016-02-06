@@ -26,11 +26,15 @@ func main() {
 	m := macaron.Classic()
 	m.Use(macaron.Renderer())
 	m.Get("/:sessionId/start", func(ctx *macaron.Context) {
+		lastBot, ok := bots[ctx.Params(":sessionId")]
+		if ok {
+			lastBot.Stop()
+		}
 		bot := &bot.WeixinBot{}
 		bots[ctx.Params(":sessionId")] = bot
-		bot.Start()
+		bot.Init()
+		go bot.Start()
 		qrcodeUrl := bot.GetQrcodeUrl()
-		go startLogin(bot)
 
 		ctx.JSON(200, &QRCodeResponse{
 			QRCodeUrl: qrcodeUrl,
