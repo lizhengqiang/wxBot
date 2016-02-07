@@ -162,8 +162,8 @@ func useTool(ctx *macaron.Context) {
 				for _, contact := range bot.MemberList {
 					if strings.Contains(contact.UserName, "@@") {
 
-					} else {
-						bot.SendMsg("很幸运你被挑中了,猴年猴赛雷,新年快乐!", contact.UserName)
+					} else if contact.VerifyFlag == 0 {
+						bot.SendMsg("猴年猴赛雷,新年快乐!", contact.UserName)
 						time.Sleep(1 * time.Second)
 					}
 
