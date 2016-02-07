@@ -85,6 +85,48 @@ type HookMessageResponse struct {
 	Content  string
 }
 
+type HookMessageContactRequest struct {
+	HookMessageRequest
+	RemarkName string
+}
+
+func (bot *WeixinBot) hookContactMessage(UserName, Content string) {
+	request := HookMessageContactRequest{
+		HookMessageRequest: HookMessageRequest{
+			Method:   "contactMessage",
+			UserName: UserName,
+			Content:  Content,
+		},
+		RemarkName: bot.GetUserRemarkName(UserName),
+	}
+	response := HookMessageResponse{}
+	bot.PostJson(bot.hooks["contactMessage"], request, &response)
+	bot.SendMsg(response.Content, response.UserName)
+}
+
+type HookGroupMessageRequest struct {
+	HookMessageRequest
+	ContactUserName   string
+	ContactRemarkName string
+	GroupRemarkName   string
+}
+
+func (bot *WeixinBot) hookGroupMessage(UserName, GroupUserName, Content string) {
+	request := HookGroupMessageRequest{
+		HookMessageRequest: HookMessageRequest{
+			Method:   "groupMessage",
+			UserName: GroupUserName,
+			Content:  Content,
+		},
+		ContactUserName: UserName,
+
+		ContactRemarkName: bot.GetUserRemarkName(UserName),
+		GroupRemarkName:   bot.GetUserRemarkName(GroupUserName),
+	}
+	response := HookMessageResponse{}
+	bot.PostJson(bot.hooks["groupMessage"], request, &response)
+	bot.SendMsg(response.Content, response.UserName)
+}
 func (bot *WeixinBot) hookMessage(UserName string, Content string) *HookMessageResponse {
 	request := HookMessageRequest{
 		Method:   "message",
@@ -465,8 +507,8 @@ func (bot *WeixinBot) GetContact() bool {
 	bot.PostJson(fmt.Sprintf("/webwxgetcontact?pass_ticket=%s&skey=%s&r=%s", bot.PassTicket, bot.SKey, bot.timestamp()), &EmptyRequest{}, &response)
 	bot.MemberList = response.MemberList
 	for _, contact := range response.MemberList {
-		if contact.VerifyFlag&8 != 0 {
 
+		if contact.VerifyFlag != 0 {
 		} else if sort.SearchStrings(SpecialUsers, contact.UserName) >= 0 {
 
 		} else if strings.Contains(contact.UserName, "@@") {
@@ -625,14 +667,12 @@ func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
 				content := strings.Replace(msgContensArray[1], "<br/>", "\n", -1)
 				groupUserName := msg.FromUserName
 				name := bot.GetUserRemarkName(userName)
-				groupName := bot.GetGroupName(groupUserName)
-				hookMessageResponse := bot.hookMessage(userName, content)
-				bot.SendMsg(hookMessageResponse.Content, groupUserName)
+				groupName := bot.GetUserRemarkName(groupUserName)
+				bot.hookGroupMessage(userName, groupName, content)
 				bot.log("%s(%s)->%s", name, groupName, content)
 			} else {
 				name := bot.GetUserRemarkName(msg.FromUserName)
-				hookMessageResponse := bot.hookMessage(msg.FromUserName, msg.Content)
-				bot.SendMsg(hookMessageResponse.Content, hookMessageResponse.UserName)
+				bot.hookContactMessage(msg.FromUserName, msg.Content)
 				bot.log("%s->%s", name, msg.Content)
 			}
 		}
@@ -660,66 +700,3 @@ func (bot *WeixinBot) ListenMsgMode() {
 		}
 	}
 }
-
-//def listenMsgMode(self):
-//info("进入消息监听模式")
-//playWeChat = 0
-//while True:
-//[retcode, selector] = self.synccheck()
-//if retcode == '1100':
-//print '[*] 你在手机上登出了微信，债见'
-//break
-//elif retcode == '0':
-//if selector == '2':
-//r = self.webwxsync()
-//if r is not None: self.handleMsg(r)
-//elif selector == '7':
-//playWeChat += 1
-//print '[*] 你在手机上玩微信被我发现了 %d 次' % playWeChat
-//r = self.webwxsync()
-//elif selector == '0':
-//time.sleep(1)
-//def synccheck(self):
-//params = {
-//'r': int(time.time()),
-//'sid': self.wxsid,
-//'uin': self.wxuin,
-//'skey': self.skey,
-//'deviceid': self.device_id,
-//'synckey': self.synckey,
-//'_': int(time.time()),
-//}
-//url = 'https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck?' + urlencode(params)
-//data = get(url)
-//
-//pm = re.search(r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}', data)
-//retcode = pm.group(1)
-//selector = pm.group(2)
-//
-//return [retcode, selector]
-//
-//url = self.base_uri + '/webwxstatusnotify?lang=zh_CN&pass_ticket=%s' % (self.pass_ticket)
-//params = {
-//'BaseRequest': self.base_request,
-//"Code": 3,
-//"FromUserName": self.my['UserName'],
-//"ToUserName": self.my['UserName'],
-//"ClientMsgId": int(time.time())
-//}
-//dic = post(url, params)
-//
-//return dic['BaseResponse']['Ret'] == 0
-
-//def web_weixin_init(self):
-//url = self.base_uri + '/webwxinit?pass_ticket=%s&skey=%s&r=%s' % (self.pass_ticket, self.skey, int(time.time()))
-//params = {
-//'BaseRequest': self.base_request
-//}
-//
-//dic = post(url, params)
-//self.contact_list = dic['ContactList']
-//self.my = dic['User']
-//self.SyncKey = dic['SyncKey']
-//self.synckey = '|'.join([str(keyVal['Key']) + '_' + str(keyVal['Val']) for keyVal in self.SyncKey['List']])
-//
-//return dic['BaseResponse']['Ret'] == 0

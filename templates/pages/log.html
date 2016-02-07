@@ -1,0 +1,9 @@
+{{ template "layouts/layout" .}}
+
+{{ define "main" }}
+<ul class="table-view">
+    {{range .Emails}}
+    <li class="table-view-cell">{{.}}</li>
+    {{end}}
+</ul>
+{{ end }}

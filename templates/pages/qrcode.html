@@ -1,0 +1,13 @@
+{{ template "layouts/layout" .}}
+
+{{ define "main" }}
+<div class="content-padded">
+    <h5>
+        长按保存后打开扫一扫识别,来登陆微信
+        <!--<a href="{:U('Bot/qrcode', array('reload' => 'y'))}">点击重新登录</a>-->
+    </h5>
+    <img style="width:100%;" src="{{.QRCodeUrl}}">
+
+
+</div>
+{{ end }}

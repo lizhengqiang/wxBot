@@ -26,10 +26,13 @@ type StatusResponse struct {
 	Code int64
 }
 
+var bots map[string]*bot.WeixinBot
+
 func main() {
-	bots := make(map[string]*bot.WeixinBot)
+	bots = make(map[string]*bot.WeixinBot)
 	m := macaron.Classic()
 	m.Use(macaron.Renderer())
+
 	m.Get("/:sessionId/start", func(ctx *macaron.Context) {
 		lastBot, ok := bots[ctx.Params(":sessionId")]
 		if ok {
@@ -82,28 +85,92 @@ func main() {
 	m.Get("/:sessionId/qrcode", func(ctx *macaron.Context) {
 		bot, ok := bots[ctx.Params(":sessionId")]
 		response := QRCodeResponse{}
+		QRCodeUrl := ""
 		if ok {
 			response.Code = 0
-			response.QRCodeUrl = bot.GetQrcodeUrl()
+			QRCodeUrl = bot.GetQrcodeUrl()
 		} else {
 			response.Code = 400
 		}
-		ctx.JSON(200, &response)
+
+		ctx.Render.HTML(200, "pages/qrcode", map[string]interface{}{"QRCodeUrl": QRCodeUrl})
 	})
+	m.Get("/:sessionId/log", log)
+	m.Get("/:sessionId/groups", groups)
+	m.Get("/:sessionId/contacts", contacts)
+	m.Get("/:sessionId/members", members)
+	m.Get("/:sessionId/sendMsg", sendMsg)
 	m.Run()
 }
 
-func startLogin(bot *bot.WeixinBot) {
-	// 等待登陆
-	bot.WaitForLogin()
-	// 登陆
-	bot.Login()
-	// 初始化信息
-	bot.InitBaseRequest()
-	bot.InitWebWeixin()
-	// 获取联系人列表
-	bot.WebWeixinStatusNotify()
-	bot.GetContact()
-	// 开始监听消息
-	bot.ListenMsgMode()
+func log(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	response := LogsResponse{}
+	var Logs []string
+	if ok {
+		response.Code = 0
+		Logs = bot.Logs
+	} else {
+		Logs = make([]string, 0)
+		response.Code = 400
+	}
+	ctx.Render.HTML(200, "pages/log", map[string]interface{}{"Logs": Logs})
+}
+
+type SendMsgResponse struct {
+	Code int64
+}
+
+func sendMsg(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	response := SendMsgResponse{}
+	content := ctx.Query("Content")
+	userName := ctx.Query("UserName")
+	if ok {
+		response.Code = 0
+		bot.SendMsg(content, userName)
+	} else {
+		response.Code = 400
+	}
+	ctx.JSON(200, &response)
+}
+
+type ContactResponse struct {
+	Code int64
+	List []bot.Contact
+}
+
+func members(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	response := ContactResponse{}
+	if ok {
+		response.Code = 0
+		response.List = bot.MemberList
+	} else {
+		response.Code = 400
+	}
+	ctx.JSON(200, &response)
+}
+
+func contacts(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	response := ContactResponse{}
+	if ok {
+		response.Code = 0
+		response.List = bot.ContactList
+	} else {
+		response.Code = 400
+	}
+	ctx.JSON(200, &response)
+}
+func groups(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	response := ContactResponse{}
+	if ok {
+		response.Code = 0
+		response.List = bot.GroupList
+	} else {
+		response.Code = 400
+	}
+	ctx.JSON(200, &response)
 }
