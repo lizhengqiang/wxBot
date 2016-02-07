@@ -3,7 +3,10 @@ package main
 import (
 	"gopkg.in/macaron.v1"
 
+	"encoding/json"
+	"fmt"
 	"github.com/go-macaron/session"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
@@ -132,21 +135,34 @@ type Hook struct {
 	Title  string
 }
 
-//func hook(ctx *macaron.Context) {
-//	hook := Hook{hook := Hook{
-//	Mehotd: "contactMessage",
-//	Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
-//	Title:  "图灵机器人",
-//	}}
-//	ctx.Render.HTML(200, "pages/log", []Hook{	})
-//}
-
 func hook(ctx *macaron.Context) {
+	hooksBytes, hooksBytesErr := ioutil.ReadFile("./hooks.json")
+	if hooksBytesErr == nil {
+		fmt.Println(string(hooksBytes))
+		hooks := make(map[string]interface{})
+		err := json.Unmarshal(hooksBytes, &hooks)
+		fmt.Println(hooks)
+		if err == nil {
+			ctx.Render.HTML(200, "pages/hook", hooks)
+			return
+		} else {
+			fmt.Println(err.Error())
+		}
+
+	} else {
+		fmt.Println(hooksBytesErr.Error())
+	}
+
 	interfaces := map[string]interface{}{"Hooks": []Hook{
 		Hook{
 			Method: "contactMessage",
 			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
-			Title:  "图灵机器人",
+			Title:  "联系人-图灵机器人",
+		},
+		Hook{
+			Method: "money",
+			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/money",
+			Title:  "响应红包",
 		},
 	}}
 	ctx.Render.HTML(200, "pages/hook", interfaces)
