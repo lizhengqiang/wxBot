@@ -3,6 +3,7 @@ package main
 import (
 	"gopkg.in/macaron.v1"
 
+	"strconv"
 	"strings"
 	"time"
 	"wxBot/bot"
@@ -83,6 +84,10 @@ func main() {
 			response.Code = 400
 		}
 		ctx.JSON(200, &response)
+	})
+	m.Get("/", func(ctx *macaron.Context) {
+		u := "/" + strconv.FormatInt(time.Now().Unix(), 10) + "/qrcode"
+		ctx.Redirect(u, 302)
 	})
 	m.Get("/:sessionId/qrcode", func(ctx *macaron.Context) {
 		bot, ok := bots[ctx.Params(":sessionId")]
