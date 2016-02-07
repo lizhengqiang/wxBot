@@ -3,6 +3,8 @@ package main
 import (
 	"gopkg.in/macaron.v1"
 
+	"strings"
+	"time"
 	"wxBot/bot"
 )
 
@@ -96,6 +98,10 @@ func main() {
 		ctx.Render.HTML(200, "pages/qrcode", map[string]interface{}{"QRCodeUrl": QRCodeUrl})
 	})
 	m.Get("/:sessionId/log", log)
+	m.Get("/:sessionId/hook", hook)
+	m.Get("/:sessionId/setHook", setHook)
+	m.Get("/:sessionId/tool", tool)
+	m.Get("/:sessionId/useTool", useTool)
 	m.Get("/:sessionId/groups", groups)
 	m.Get("/:sessionId/contacts", contacts)
 	m.Get("/:sessionId/members", members)
@@ -103,16 +109,102 @@ func main() {
 	m.Run()
 }
 
-func log(ctx *macaron.Context) {
+type Hook struct {
+	Method string
+	Url    string
+	Title  string
+}
+
+//func hook(ctx *macaron.Context) {
+//	hook := Hook{hook := Hook{
+//	Mehotd: "contactMessage",
+//	Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
+//	Title:  "图灵机器人",
+//	}}
+//	ctx.Render.HTML(200, "pages/log", []Hook{	})
+//}
+
+func hook(ctx *macaron.Context) {
+	interfaces := map[string]interface{}{"Hooks": []Hook{
+		Hook{
+			Method: "contactMessage",
+			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
+			Title:  "图灵机器人",
+		},
+	}}
+	ctx.Render.HTML(200, "pages/hook", interfaces)
+}
+
+func tool(ctx *macaron.Context) {
+	interfaces := map[string]interface{}{"Tools": []Hook{
+		Hook{
+			Method: "singleHappyNewYear",
+			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
+			Title:  "随机单发新年快乐",
+		},
+	}}
+	ctx.Render.HTML(200, "pages/tool", interfaces)
+}
+
+type UserToolResponse struct {
+	Code int64
+}
+
+func useTool(ctx *macaron.Context) {
 	bot, ok := bots[ctx.Params(":sessionId")]
-	response := LogsResponse{}
-	var Logs []string
+	response := &SetHookResponse{}
+	method := ctx.Query("Method")
 	if ok {
 		response.Code = 0
+
+		if method == "singleHappyNewYear" {
+			go func() {
+				for _, contact := range bot.MemberList {
+					if strings.Contains(contact.UserName, "@@") {
+
+					} else {
+						bot.SendMsg("很幸运你被挑中了,猴年猴赛雷,新年快乐!", contact.UserName)
+						time.Sleep(1 * time.Second)
+					}
+
+				}
+			}()
+
+		}
+	} else {
+		response.Code = 400
+	}
+
+	ctx.JSON(200, response)
+}
+
+type SetHookResponse struct {
+	Code  int64
+	Hooks map[string]string
+}
+
+func setHook(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	response := &SetHookResponse{}
+	if ok {
+		response.Code = 0
+		bot.RegisterHookUrl(ctx.Query("Method"), ctx.Query("Url"))
+		response.Hooks = bot.Hooks
+	} else {
+		response.Code = 400
+	}
+
+	ctx.JSON(200, response)
+
+}
+
+func log(ctx *macaron.Context) {
+	bot, ok := bots[ctx.Params(":sessionId")]
+	var Logs []string
+	if ok {
 		Logs = bot.Logs
 	} else {
 		Logs = make([]string, 0)
-		response.Code = 400
 	}
 	ctx.Render.HTML(200, "pages/log", map[string]interface{}{"Logs": Logs})
 }

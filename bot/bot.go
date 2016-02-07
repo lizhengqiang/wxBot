@@ -19,33 +19,33 @@ import (
 )
 
 type WeixinBot struct {
-	HttpClient  *http.Client
-	UUID        string
-	Tip         string
-	RedirectUri string
-	BaseUri     string
-	SKey        string
-	WxSid       string
-	WxUin       int64
-	PassTicket  string
-	DeviceId    string
+	HttpClient    *http.Client
+	UUID          string
+	Tip           string
+	RedirectUri   string
+	BaseUri       string
+	SKey          string
+	WxSid         string
+	WxUin         int64
+	PassTicket    string
+	DeviceId      string
 
-	BaseRequest *BaseRequest
+	BaseRequest   *BaseRequest
 
-	My *User
+	My            *User
 
-	MemberList  []Contact
-	ContactList []Contact
-	GroupList   []Contact
+	MemberList    []Contact
+	ContactList   []Contact
+	GroupList     []Contact
 
 	SyncKey       *SyncKey
 	SyncKeyString string
 
-	hooks map[string]string
+	Hooks         map[string]string
 
-	Logs []string
+	Logs          []string
 
-	running bool
+	running       bool
 }
 
 func (bot *WeixinBot) timestamp() string {
@@ -56,7 +56,7 @@ func (bot *WeixinBot) timestamp() string {
 func (bot *WeixinBot) log(format string, v ...interface{}) {
 
 	if len(v) > 0 {
-		fmt.Printf(format+"\n", v...)
+		fmt.Printf(format + "\n", v...)
 		bot.Logs = append(bot.Logs, fmt.Sprintf(format, v...))
 	} else {
 		fmt.Printf(format + "\n")
@@ -70,7 +70,7 @@ func (bot *WeixinBot) fmt() {
 }
 
 func (bot *WeixinBot) RegisterHookUrl(hookMethod string, hookUrl string) {
-	bot.hooks[hookMethod] = hookUrl
+	bot.Hooks[hookMethod] = hookUrl
 }
 
 type HookMessageRequest struct {
@@ -100,7 +100,7 @@ func (bot *WeixinBot) hookContactMessage(UserName, Content string) {
 		RemarkName: bot.GetUserRemarkName(UserName),
 	}
 	response := HookMessageResponse{}
-	bot.PostJson(bot.hooks["contactMessage"], request, &response)
+	bot.PostJson(bot.Hooks["contactMessage"], request, &response)
 	bot.SendMsg(response.Content, response.UserName)
 }
 
@@ -124,7 +124,7 @@ func (bot *WeixinBot) hookGroupMessage(UserName, GroupUserName, Content string) 
 		GroupRemarkName:   bot.GetUserRemarkName(GroupUserName),
 	}
 	response := HookMessageResponse{}
-	bot.PostJson(bot.hooks["groupMessage"], request, &response)
+	bot.PostJson(bot.Hooks["groupMessage"], request, &response)
 	bot.SendMsg(response.Content, response.UserName)
 }
 func (bot *WeixinBot) hookMessage(UserName string, Content string) *HookMessageResponse {
@@ -134,7 +134,7 @@ func (bot *WeixinBot) hookMessage(UserName string, Content string) *HookMessageR
 		Content:  Content,
 	}
 	response := HookMessageResponse{}
-	bot.PostJson(bot.hooks["message"], request, &response)
+	bot.PostJson(bot.Hooks["message"], request, &response)
 	return &response
 }
 
@@ -165,7 +165,7 @@ func (bot *WeixinBot) Start() {
 
 func (bot *WeixinBot) Init() {
 	bot.running = true
-	bot.hooks = make(map[string]string)
+	bot.Hooks = make(map[string]string)
 	bot.DeviceId = "e" + string([]byte(fmt.Sprint(rand.Float64()))[2:17])
 	gCurCookieJar, _ := cookiejar.New(nil)
 
@@ -249,20 +249,20 @@ func (bot *WeixinBot) WaitForLogin() bool {
 
 type LoginHtml struct {
 	Html struct {
-		Head struct {
-		} `xml:"head"`
-		Body struct {
-			Error struct {
-				Ret         string `xml:"ret"`
-				Message     string `xml:"message"`
-				Skey        string `xml:"skey"`
-				Wxsid       string `xml:"wxsid"`
-				Wxuin       string `xml:"wxuin"`
-				PassTicket  string `xml:"pass_ticket"`
-				IsGrayscale string `xml:"isgrayscale"`
-			} `xml:"error"`
-		} `xml:"body"`
-	} `xml:"html"`
+		     Head struct {
+			  } `xml:"head"`
+		     Body struct {
+				  Error struct {
+						Ret         string `xml:"ret"`
+						Message     string `xml:"message"`
+						Skey        string `xml:"skey"`
+						Wxsid       string `xml:"wxsid"`
+						Wxuin       string `xml:"wxuin"`
+						PassTicket  string `xml:"pass_ticket"`
+						IsGrayscale string `xml:"isgrayscale"`
+					} `xml:"error"`
+			  } `xml:"body"`
+	     } `xml:"html"`
 }
 
 func (bot *WeixinBot) Login() bool {
@@ -329,7 +329,7 @@ func (bot *WeixinBot) SimplePostJson(uri string, params interface{}) (b []byte, 
 	if paramsErr != nil {
 		return nil, paramsErr
 	}
-	resp, err := bot.HttpClient.Post(bot.BaseUri+uri, "application/json", bytes.NewReader(paramsBytes))
+	resp, err := bot.HttpClient.Post(bot.BaseUri + uri, "application/json", bytes.NewReader(paramsBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +626,7 @@ type SendMsgResponse struct {
 }
 
 func (bot *WeixinBot) SendMsg(Content, UserName string) {
-	clientMsgId := strconv.FormatInt(time.Now().Unix()*1000+time.Now().Unix(), 10)
+	clientMsgId := strconv.FormatInt(time.Now().Unix() * 1000 + time.Now().Unix(), 10)
 	request := SendMsgRequest{
 		BaseRequest: bot.BaseRequest,
 		Msg: &Msg{

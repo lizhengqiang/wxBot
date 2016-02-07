@@ -1,0 +1,23 @@
+{{template "public/header" .}}
+<ul class="table-view">
+    {{with .Tools}}
+    {{range .}}
+    <li class="table-view-cell">
+        <a href="#" onclick="register('{{.Method}}', '{{.Title}}')" class="navigate-right">
+            <span class="badge">{{.Method}}</span>
+            {{.Title}}
+        </a>
+    </li>
+    {{end}}
+    {{end}}
+</ul>
+<script>
+    function register(method, title) {
+        $.get('./useTool', {
+            Method: method,
+        }, function (response) {
+            alert(title + "触发成功");
+        }, "json")
+    }
+</script>
+{{template "public/footer" .}}

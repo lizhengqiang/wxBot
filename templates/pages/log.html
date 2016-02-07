@@ -1,9 +1,7 @@
-{{ template "layouts/layout" .}}
-
-{{ define "main" }}
+{{template "public/header" .}}
 <ul class="table-view">
-    {{range .Emails}}
+    {{range .Logs}}
     <li class="table-view-cell">{{.}}</li>
     {{end}}
 </ul>
-{{ end }}
+{{template "public/footer" .}}

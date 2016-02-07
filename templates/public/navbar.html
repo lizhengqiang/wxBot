@@ -1,18 +1,18 @@
-{{template "base" .}}
-{{define "body"}}
-{{template "main" .}}
 <nav class="bar bar-tab">
-    <a class="tab-item" href="/{{.sessionId}}/qrcode">
+    <a class="tab-item" href="./qrcode">
         <span class="icon icon-home"></span>
         <span class="tab-label">登陆</span>
     </a>
-    <a class="tab-item" href="/{{.sessionId}}/log">
+    <a class="tab-item" href="./log">
         <span class="icon icon-bars"></span>
         <span class="tab-label">日志</span>
     </a>
-    <a class="tab-item" href="/{{.sessionId}}/hook">
+    <a class="tab-item" href="./hook">
         <span class="icon icon-plus"></span>
         <span class="tab-label">Hook</span>
     </a>
+    <a class="tab-item" href="./tool">
+        <span class="icon icon-plus"></span>
+        <span class="tab-label">工具</span>
+    </a>
 </nav>
-{{end}}

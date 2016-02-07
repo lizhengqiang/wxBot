@@ -1,13 +1,20 @@
-{{ template "layouts/layout" .}}
-
-{{ define "main" }}
+{{template "public/header" .}}
 <div class="content-padded">
     <h5>
         长按保存后打开扫一扫识别,来登陆微信
-        <!--<a href="{:U('Bot/qrcode', array('reload' => 'y'))}">点击重新登录</a>-->
+    </h5>
+    <h5>
+        <a href="#" onclick="start()">点击重新登录</a>
     </h5>
     <img style="width:100%;" src="{{.QRCodeUrl}}">
 
 
 </div>
-{{ end }}
+<script>
+    function start() {
+        $.get('./start', function (response) {
+            window.location.reload()
+        }, "json")
+    }
+</script>
+{{template "public/footer" .}}
