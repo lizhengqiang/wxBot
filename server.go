@@ -3,6 +3,7 @@ package main
 import (
 	"gopkg.in/macaron.v1"
 
+	"github.com/go-macaron/session"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +36,7 @@ func main() {
 	bots = make(map[string]*bot.WeixinBot)
 	m := macaron.Classic()
 	m.Use(macaron.Renderer())
+	m.Use(session.Sessioner())
 
 	m.Get("/:sessionId/start", func(ctx *macaron.Context) {
 		lastBot, ok := bots[ctx.Params(":sessionId")]
@@ -85,8 +87,18 @@ func main() {
 		}
 		ctx.JSON(200, &response)
 	})
-	m.Get("/", func(ctx *macaron.Context) {
-		u := "/" + strconv.FormatInt(time.Now().Unix(), 10) + "/qrcode"
+	m.Get("/", func(ctx *macaron.Context, sess session.Store) {
+		sessionId := ""
+		sessionIdInterface := sess.Get("sessionId")
+		if sessionIdInterface != nil {
+			sessionId = sessionIdInterface.(string)
+		}
+		if sessionId == "" {
+			sessionId = strconv.FormatInt(time.Now().Unix(), 10)
+			sess.Set("sessionId", sessionId)
+		}
+		u := "/" + sessionId + "/qrcode"
+
 		ctx.Redirect(u, 302)
 	})
 	m.Get("/:sessionId/qrcode", func(ctx *macaron.Context) {
