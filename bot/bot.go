@@ -652,8 +652,14 @@ func (bot *WeixinBot) handleMsg(msgList []AddMsg) {
 			continue
 		} else if strings.Contains(msg.FromUserName, "@@") {
 			contents := strings.Split(msg.Content, `:<br/>`)
-			userName = contents[0]
-			content = contents[1]
+			if len(contents) == 1 {
+				content = contents[0]
+			} else if len(contents) == 2 {
+				userName = contents[0]
+				content = contents[1]
+			} else {
+				content = msg.Content
+			}
 			groupUserName = msg.FromUserName
 			name = bot.GetRemarkName(userName)
 			groupName = bot.GetRemarkName(groupUserName)
@@ -700,8 +706,9 @@ func (bot *WeixinBot) ListenMsgMode() {
 			} else if selector == 7 {
 				bot.log("# 发现你玩手机了!")
 			} else if selector == 0 {
-				time.Sleep(3 * time.Second)
+
 			}
 		}
+		time.Sleep(3 * time.Second)
 	}
 }

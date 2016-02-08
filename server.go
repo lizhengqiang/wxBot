@@ -2,7 +2,6 @@ package main
 
 import (
 	"gopkg.in/macaron.v1"
-
 	"encoding/json"
 	"fmt"
 	"github.com/go-macaron/session"
@@ -136,6 +135,7 @@ type Hook struct {
 }
 
 func hook(ctx *macaron.Context) {
+
 	hooksBytes, hooksBytesErr := ioutil.ReadFile("./hooks.json")
 	if hooksBytesErr == nil {
 		fmt.Println(string(hooksBytes))
