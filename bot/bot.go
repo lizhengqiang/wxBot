@@ -704,7 +704,7 @@ func (bot *WeixinBot) ListenMsgMode() {
 				}
 
 			} else if selector == 7 {
-				_ := bot.WebWeixinSync()
+				_ = bot.WebWeixinSync()
 				bot.log("# 发现你玩手机了!")
 			} else if selector == 0 {
 
