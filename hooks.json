@@ -2,32 +2,32 @@
   "Hooks": [
     {
       "Method": "contactMessage",
-      "Url": "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/message",
+      "Url": "http://wechat.mengxiaozhu.cn/Bot/message",
       "Title": "联系人机器人-开启"
     },
     {
       "Method": "contactMessage",
-      "Url": "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/close",
+      "Url": "http://wechat.mengxiaozhu.cn/Bot/close",
       "Title": "联系人机器人-关闭"
     },
     {
       "Method": "groupMessage",
-      "Url": "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/message",
+      "Url": "http://wechat.mengxiaozhu.cn/Bot/message",
       "Title": "群聊机器人-开启"
     },
     {
       "Method": "groupMessage",
-      "Url": "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/close",
+      "Url": "http://wechat.mengxiaozhu.cn/Bot/close",
       "Title": "群聊机器人-关闭"
     },
     {
       "Method": "money",
-      "Url": "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/money",
+      "Url": "http://wechat.mengxiaozhu.cn/Bot/money",
       "Title": "响应红包-开启"
     },
     {
       "Method": "money",
-      "Url": "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/close",
+      "Url": "http://wechat.mengxiaozhu.cn/Bot/close",
       "Title": "响应红包-关闭"
     }
   ]

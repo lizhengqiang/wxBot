@@ -154,16 +154,6 @@ func hook(ctx *macaron.Context) {
 	}
 
 	interfaces := map[string]interface{}{"Hooks": []Hook{
-		Hook{
-			Method: "contactMessage",
-			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
-			Title:  "联系人-图灵机器人",
-		},
-		Hook{
-			Method: "money",
-			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/Bot/money",
-			Title:  "响应红包",
-		},
 	}}
 	ctx.Render.HTML(200, "pages/hook", interfaces)
 }
@@ -171,14 +161,16 @@ func hook(ctx *macaron.Context) {
 func tool(ctx *macaron.Context) {
 	interfaces := map[string]interface{}{"Tools": []Hook{
 		Hook{
-			Method: "singleHappyNewYear",
-			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
-			Title:  "随机单发新年快乐",
+			Method: "contact",
+			Title:  "联系人群发",
 		},
 		Hook{
 			Method: "mp",
-			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
-			Title:  "随机单发新年快乐",
+			Title:  "公众号群发",
+		},
+		Hook{
+			Method: "group",
+			Title:  "微信群群发",
 		},
 	}}
 	ctx.Render.HTML(200, "pages/tool", interfaces)
@@ -196,22 +188,26 @@ func useTool(ctx *macaron.Context) {
 	if ok {
 		response.Code = 0
 
-		if method == "singleHappyNewYear" {
+		if method == "contact" {
 			go func() {
-				for _, contact := range bot.MemberList {
-					if strings.Contains(contact.UserName, "@@") {
+				for _, contact := range bot.ContactList {
+					bot.SendMsg(message, contact.UserName)
+					time.Sleep(1 * time.Second)
 
-					} else if contact.VerifyFlag == 0 {
-						bot.SendMsg("猴年猴赛雷,新年快乐!", contact.UserName)
-						time.Sleep(1 * time.Second)
-					}
+				}
+			}()
+		}else if method == "mp" {
+			go func() {
+				for _, contact := range bot.MpList {
+					bot.SendMsg(message, contact.UserName)
+					time.Sleep(1 * time.Second)
 
 				}
 			}()
 
-		}else if method == "mp" {
+		}else if method == "group" {
 			go func() {
-				for _, contact := range bot.MpList {
+				for _, contact := range bot.GroupList {
 					bot.SendMsg(message, contact.UserName)
 					time.Sleep(1 * time.Second)
 
