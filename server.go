@@ -7,7 +7,6 @@ import (
 	"github.com/go-macaron/session"
 	"io/ioutil"
 	"strconv"
-	"strings"
 	"time"
 	"wxBot/bot"
 )
