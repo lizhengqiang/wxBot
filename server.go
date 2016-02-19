@@ -175,6 +175,11 @@ func tool(ctx *macaron.Context) {
 			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
 			Title:  "随机单发新年快乐",
 		},
+		Hook{
+			Method: "mp",
+			Url:    "http://wechat.lizhengqiang.alpha.mouge.cc/BlackHole/messageHook",
+			Title:  "随机单发新年快乐",
+		},
 	}}
 	ctx.Render.HTML(200, "pages/tool", interfaces)
 }
@@ -187,6 +192,7 @@ func useTool(ctx *macaron.Context) {
 	bot, ok := bots[ctx.Params(":sessionId")]
 	response := &SetHookResponse{}
 	method := ctx.Query("Method")
+	message := ctx.Query("Msg")
 	if ok {
 		response.Code = 0
 
@@ -203,7 +209,17 @@ func useTool(ctx *macaron.Context) {
 				}
 			}()
 
+		}else if method == "mp" {
+			go func() {
+				for _, contact := range bot.MpList {
+					bot.SendMsg(message, contact.UserName)
+					time.Sleep(1 * time.Second)
+
+				}
+			}()
+
 		}
+
 	} else {
 		response.Code = 400
 	}
