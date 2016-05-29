@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <title>wxBot</title>
+    <link rel="stylesheet" href="//nzsjtzs2b.qnssl.com/Public/css/semantic.css"/>
+
+    <script src="//o2030m4h2.qnssl.com/jquery/jquery-1.12.0.min.js"></script>
+    <script src="//nzsjtzs2b.qnssl.com/Public/js/vue.min.js"></script>
+    <script src="//nzsjtzs2b.qnssl.com/Public/js/semantic.min.js"></script>
+</head>
+
+<body>
+<div id="bot" class="ui basic segment">
+    <h2 class="ui header">
+        <i class="settings icon"></i>
+        <div class="content">
+            wxBot
+            <div class="sub header">扫描登陆</div>
+        </div>
+    </h2>
+    <div class="ui cards">
+        <div class="ui card">
+            <div class="image">
+                <img v-bind:src="qrcode">
+            </div>
+            <div class="content">
+                <a class="header">扫描二维码登录微信</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        var bot = new Vue({
+            el: '#bot',
+            data: {
+                qrcode: ""
+            },
+            methods: {
+                loadQrCode: function () {
+                    $.get("/api/qrcode", function (resp, status) {
+                        bot.qrcode = resp.data;
+                    }, "json")
+                }
+            },
+            ready: function () {
+                $.get("/api/start", function (data, status) {
+                    setTimeout(function () {
+                        bot.loadQrCode();
+                    }, 1000)
+                }, "json")
+            }
+        });
+    })
+</script>
+</body>
+</html>

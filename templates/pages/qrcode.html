@@ -12,7 +12,8 @@
 </div>
 <script>
     function start() {
-        $.get('./start', function (response) {
+        $.get('/api/start', function (response) {
+            // TODO 这太SB了
             window.location.reload()
         }, "json")
     }
