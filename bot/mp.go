@@ -8,7 +8,7 @@ func (this *WeixinBot) mps(content string) {
 		this.fileHelperResponse("请等待上次任务结束")
 		return
 	}
-	this.set("task", TRUE)
+	this.Set("task", TRUE)
 	mps := []*Contact{}
 	this.unmarshal(mpList, &mps)
 
@@ -16,11 +16,11 @@ func (this *WeixinBot) mps(content string) {
 	this.Idle()
 	for i, mp := range mps {
 		this.Println(mp)
-		this.set("status", "推送公众号:" + strconv.Itoa(i) + "/" + strconv.Itoa(len(mps)))
+		this.Set("status", "推送公众号:" + strconv.Itoa(i) + "/" + strconv.Itoa(len(mps)))
 		this.SendMsg(content, mp.UserName)
 
 		this.Idle()
 	}
-	this.set("task", FALSE)
+	this.Set("task", FALSE)
 	this.fileHelperResponse("推送完毕:" + strconv.Itoa(len(mps)) + "个公众号")
 }

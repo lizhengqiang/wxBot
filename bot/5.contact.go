@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+func init() {
+
+}
+
 type Contact struct {
 	VerifyFlag  int64
 	UserName    string

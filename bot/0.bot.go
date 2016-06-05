@@ -8,6 +8,7 @@ import (
 
 // TODO 得先把这个改成分布式
 type WeixinBot struct {
+	ID         string
 	httpClient *http.Client
 	Cacher     Cache
 }
@@ -29,9 +30,3 @@ type BaseResponse struct {
 
 type EmptyRequest struct {
 }
-
-
-
-
-
-

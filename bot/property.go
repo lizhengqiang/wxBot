@@ -11,7 +11,7 @@ const (
 	FALSE = "false"
 )
 const (
-	isRunning = "isRunning"
+	IsRunning = "isRunning"
 	isLogining = "isLoading"
 	wxuni = "wxuni"
 	wxsid = "wxsid"
@@ -49,7 +49,7 @@ func (this *WeixinBot) unmarshal(key string, value interface{}) {
 	json.Unmarshal([]byte(str), value)
 }
 
-func (this *WeixinBot) set(key string, value string) {
+func (this *WeixinBot) Set(key string, value string) {
 	this.Cacher.Set("data/" + key, value)
 }
 
@@ -68,7 +68,7 @@ func (this *WeixinBot) getProperty(key string) (value string) {
 }
 
 func (this *WeixinBot) setProperty(key string, value string) {
-	this.set("property/" + key, value)
+	this.Set("property/" + key, value)
 }
 
 
@@ -99,7 +99,7 @@ func (this *WeixinBot) getBaseRequest() (req *BaseRequest) {
 }
 
 func (bot *WeixinBot) IsRunning() bool {
-	return bot.get(isRunning) == TRUE
+	return bot.get(IsRunning) == TRUE
 }
 
 func (this *WeixinBot) IsLogining() bool {
