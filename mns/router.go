@@ -1,12 +1,11 @@
 package mns
 
 import (
-	"github.com/cocotyty/summer"
 	"wxBot/bot"
 )
 
 func (this *Trigger) Router() {
-	summer.GetStoneWithName("Trigger").(*Trigger).When("start", func(t *Trigger, b *bot.WeixinBot, m *Message) {
+	this.When("start", func(t *Trigger, b *bot.WeixinBot, m *Message) {
 		// 第一次启动
 		if !b.IsRunning() {
 			// 初始化
@@ -15,7 +14,7 @@ func (this *Trigger) Router() {
 		}
 
 	})
-	summer.GetStoneWithName("Trigger").(*Trigger).When("handleQRCodeScanStatus", func(t *Trigger, b *bot.WeixinBot, m *Message) {
+	this.When("handleQRCodeScanStatus", func(t *Trigger, b *bot.WeixinBot, m *Message) {
 		err := b.HandleQRCodeScanStatus()
 		if err == bot.WaitScanQRCode {
 			t.Send(b.ID, "handleQRCodeScanStatus", nil)
@@ -32,7 +31,7 @@ func (this *Trigger) Router() {
 
 	})
 
-	summer.GetStoneWithName("Trigger").(*Trigger).When("login", func(t *Trigger, b *bot.WeixinBot, m *Message) {
+	this.When("login", func(t *Trigger, b *bot.WeixinBot, m *Message) {
 		err := b.Login()
 		if err != nil {
 			b.Println("登陆失败. ")
@@ -53,23 +52,28 @@ func (this *Trigger) Router() {
 
 		t.Send(b.ID, "contact", nil)
 
-		t.Send(b.ID, "listen", nil)
+		t.Send(b.ID, "handleMsg", nil)
 
 		return
 	})
 
-	summer.GetStoneWithName("Trigger").(*Trigger).When("contact", func(t *Trigger, b *bot.WeixinBot, m *Message) {
+	this.When("contact", func(t *Trigger, b *bot.WeixinBot, m *Message) {
 		b.GetContact()
 
 		return
 	})
 
-	summer.GetStoneWithName("Trigger").(*Trigger).When("handleMsg", func(t *Trigger, b *bot.WeixinBot, m *Message) {
+	this.When("handleMsg", func(t *Trigger, b *bot.WeixinBot, m *Message) {
 		err := b.HandleMsg()
 		if err != nil {
 			return
 		}
 		t.Send(b.ID, "handleMsg", nil)
+		return
+	})
+
+	this.When("sendMsg", func(t *Trigger, b *bot.WeixinBot, m *Message) {
+		b.SendMsg(m.Body["content"].(string), m.Body["toUserName"].(string))
 		return
 	})
 }

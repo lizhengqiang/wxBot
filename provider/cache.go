@@ -16,13 +16,13 @@ type Cacher struct {
 }
 
 func (this *Cacher) Get(key string) string {
-	v := this.c.Get(this.ID + ":" + key)
-
-	return v.String()
+	r := this.c.Get(this.ID + ":" + key)
+	v, _ := r.Result()
+	return v
 }
 
 func (this *Cacher) Set(key string, value string) (err error) {
-	r := this.c.Set(this.ID+":"+key, value)
+	r := this.c.Set(this.ID + ":" + key, value)
 	return r.Err()
 }
 

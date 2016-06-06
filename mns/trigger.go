@@ -18,6 +18,10 @@ type Trigger struct {
 	handlers      map[string][]Handler
 }
 
+func (this *Trigger) Init() {
+	this.handlers = map[string][]Handler{}
+}
+
 func (this *Trigger) idle() {
 	time.Sleep(3 * time.Second)
 }
@@ -73,6 +77,7 @@ func (this *Trigger) Ready() {
 	respChan := make(chan ali_mns.MessageReceiveResponse)
 	errChan := make(chan error)
 	this.MQ.Recv(respChan, errChan)
+	this.Router()
 	go func() {
 		for {
 			select {
@@ -80,8 +85,14 @@ func (this *Trigger) Ready() {
 
 				err := this.handle(resp)
 				if err != nil {
-					continue
+					log.Println(err)
 				}
+
+				err = this.MQ.Queue.DeleteMessage(resp.ReceiptHandle)
+				if err != nil {
+					log.Println(err)
+				}
+
 			case err := <-errChan:
 				log.Println(err)
 				this.idle()
