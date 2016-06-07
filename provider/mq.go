@@ -3,16 +3,24 @@ package provider
 import (
 	"github.com/cocotyty/summer"
 	"github.com/gogap/ali_mns"
+	"os"
 	"qiniupkg.com/x/log.v7"
 )
 
 type MQ struct {
-	AccessKey string `sm:"#.aliyun.accessKey"`
-	SecretKey string `sm:"#.aliyun.secretKey"`
-	MnsUrl    string `sm:"#.mq.url"`
-	QueueName string `sm:"#.mq.queue"`
+	AccessKey string
+	SecretKey string
+	MnsUrl    string
+	QueueName string
 	Queue     ali_mns.AliMNSQueue
 	Client    ali_mns.MNSClient
+}
+
+func (this *MQ) Init() {
+	this.AccessKey = os.Getenv("aliyun.accessKey")
+	this.SecretKey = os.Getenv("aliyun.secretKey")
+	this.MnsUrl = os.Getenv("mq.url")
+	this.QueueName = os.Getenv("mq.queue")
 }
 
 func (this *MQ) Ready() {

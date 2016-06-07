@@ -6,6 +6,7 @@ import (
 	"github.com/cocotyty/summer"
 	"gopkg.in/ini.v1"
 	"gopkg.in/redis.v2"
+	"os"
 	"strings"
 	"time"
 )
@@ -22,7 +23,7 @@ func (this *Cacher) Get(key string) string {
 }
 
 func (this *Cacher) Set(key string, value string) (err error) {
-	r := this.c.Set(this.ID + ":" + key, value)
+	r := this.c.Set(this.ID+":"+key, value)
 	return r.Err()
 }
 
@@ -32,7 +33,11 @@ func init() {
 
 type CacherFactory struct {
 	RedisClient *redis.Client
-	RedisConf   string `sm:"#.redis.conf"`
+	RedisConf   string
+}
+
+func (this *CacherFactory) Init() {
+	this.RedisConf = os.Getenv("redis.conf")
 }
 
 func (this *CacherFactory) InitClient() error {

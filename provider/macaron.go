@@ -11,14 +11,19 @@ import (
 	_ "github.com/go-macaron/cache/redis"
 	_ "github.com/go-macaron/session/redis"
 	"github.com/mougeli/beauty"
+	"os"
 )
 
 type HttpServer struct {
 	M                *macaron.Macaron
-	SessionRedisConf string `sm:"#.redis.session"`
-	CacheRedisConf   string `sm:"#.redis.cache"`
+	SessionRedisConf string
+	CacheRedisConf   string
 }
 
+func (this *HttpServer) Init() {
+	this.SessionRedisConf = os.Getenv("redis.session")
+	this.CacheRedisConf = os.Getenv("redis.cache")
+}
 func (this *HttpServer) Ready() {
 	opt := session.Options{
 		Provider:       "redis",

@@ -68,11 +68,12 @@ func (this *Trigger) Router() {
 	})
 
 	this.When("handleMsg", func(t *Trigger, b *WeixinBot, m *provider.Message) {
-		t.Send(b.ID, "handleMsg", nil)
+
 		err := b.HandleMsg()
 		if err != nil {
 			return
 		}
+		t.Send(b.ID, "handleMsg", nil)
 		return
 	})
 
