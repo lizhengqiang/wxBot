@@ -55,7 +55,7 @@ func (this *WeixinBot) GetContact() error {
 	this.marshal(groupList, groups)
 	this.marshal(mpList, mps)
 	this.Println(mps)
-	this.Println(this.get(mpList))
+	this.Println(this.Get(mpList))
 	this.marshal(contactList, contacts)
 	this.Println("联系人信息获取完毕")
 	return nil

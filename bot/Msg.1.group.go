@@ -15,7 +15,7 @@ func (this *WeixinBot) groupMessage(msg *AddMsg) {
 		content = msg.Content
 	}
 
-	if userName == this.getMe().UserName {
+	if userName == this.GetMe().UserName {
 		return
 	}
 

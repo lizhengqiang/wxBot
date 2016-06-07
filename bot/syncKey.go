@@ -33,7 +33,7 @@ func (bot *WeixinBot) SyncCheck() (retcode, selector int64, err error) {
 	queryValues := url.Values{}
 	queryValues.Add("synckey", bot.getProperty(syncKeyString))
 	queryValues.Add("skey", bot.getProperty(skey))
-	queryValues.Add("uin", bot.get(wxuni))
+	queryValues.Add("uin", bot.Get(wxuni))
 	queryValues.Add("r", bot.timestamp())
 	queryValues.Add("deviceid", bot.getProperty(deviceId))
 	queryValues.Add("sid", bot.getProperty(wxsid))

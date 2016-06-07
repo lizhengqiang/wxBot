@@ -14,7 +14,7 @@ func (this *WeixinBot) fileHelperResponse(content string) {
 
 func (this *WeixinBot) fileHelper(msg *AddMsg) {
 	if msg.Content == "me" {
-		bytes, _ := json.MarshalIndent(this.getMe(), "", "  ")
+		bytes, _ := json.MarshalIndent(this.GetMe(), "", "  ")
 		this.fileHelperResponse(string(bytes))
 		return
 	}
@@ -25,12 +25,12 @@ func (this *WeixinBot) fileHelper(msg *AddMsg) {
 	}
 
 	if msg.Content == "now" {
-		this.fileHelperResponse(this.get("status"))
+		this.fileHelperResponse(this.Get("status"))
 		return
 	}
 
 	if msg.Content == "mps" {
-		this.fileHelperResponse(this.get(mpList))
+		this.fileHelperResponse(this.Get(mpList))
 		return
 	}
 

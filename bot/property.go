@@ -40,7 +40,7 @@ var (
 	ErrCacheMiss = errors.New("找不到数据")
 )
 
-func (this *WeixinBot) get(key string) (value string) {
+func (this *WeixinBot) Get(key string) (value string) {
 	value = this.Cacher.Get("data/" + key)
 	return
 }
@@ -63,7 +63,7 @@ func (this *WeixinBot) marshal(key string, value interface{}) {
 }
 
 func (this *WeixinBot) getProperty(key string) (value string) {
-	value = this.get("property/" + key)
+	value = this.Get("property/" + key)
 	return
 }
 
@@ -82,7 +82,7 @@ type User struct {
 
 
 
-func (this *WeixinBot) getMe() (user *User) {
+func (this *WeixinBot) GetMe() (user *User) {
 	user = &User{}
 	this.unmarshal(me, user)
 	return user
@@ -99,9 +99,9 @@ func (this *WeixinBot) getBaseRequest() (req *BaseRequest) {
 }
 
 func (bot *WeixinBot) IsRunning() bool {
-	return bot.get(IsRunning) == TRUE
+	return bot.Get(IsRunning) == TRUE
 }
 
 func (this *WeixinBot) IsLogining() bool {
-	return this.get(isLogining) == TRUE
+	return this.Get(isLogining) == TRUE
 }

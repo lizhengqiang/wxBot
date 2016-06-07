@@ -38,7 +38,7 @@ func (this *WeixinBot) handleMsg(msgList []*AddMsg) {
 		}
 
 		// 自己的
-		if msg.FromUserName == this.getMe().UserName {
+		if msg.FromUserName == this.GetMe().UserName {
 
 			continue
 		}
@@ -79,7 +79,7 @@ func (bot *WeixinBot) DoSendMsg(content, toUserName string) {
 		Msg: &Msg{
 			Type:         1,
 			Content:      content,
-			FromUserName: bot.getMe().UserName,
+			FromUserName: bot.GetMe().UserName,
 			ToUserName:   toUserName,
 			LocalID:      clientMsgId,
 			ClientMsgId:  clientMsgId,

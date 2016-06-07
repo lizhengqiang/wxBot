@@ -25,11 +25,23 @@
     </h2>
     <div class="ui cards">
         <div class="ui card">
+            <div class="content">
+                <a class="header">{{status.me.NickName}}</a>
+                <a class="header">当前状态:{{status.status}}</a>
+            </div>
             <div class="image">
                 <img v-bind:src="qrcode">
             </div>
+
             <div class="content">
                 <a class="header">扫描二维码登录微信</a>
+
+
+            </div>
+            <div class="content">
+                <p>指令(使用空格分隔),功能</p>
+                <p>me,查看个人信息</p>
+                <p>mps+推送的内容,向所有公众号推送消息</p>
             </div>
         </div>
     </div>
@@ -39,20 +51,31 @@
         var bot = new Vue({
             el: '#bot',
             data: {
-                qrcode: ""
+                qrcode: "",
+                status: {}
             },
             methods: {
+                refresh: function () {
+                    bot.loadQrCode();
+                    bot.loadStatus();
+                    setTimeout(function () {
+                        bot.refresh();
+                    }, 5000)
+                },
                 loadQrCode: function () {
                     $.get("/api/qrcode", function (resp, status) {
                         bot.qrcode = resp.data;
+                    }, "json")
+                },
+                loadStatus: function () {
+                    $.get("/api/status", function (resp, status) {
+                        bot.status = resp.data;
                     }, "json")
                 }
             },
             ready: function () {
                 $.get("/api/start", function (data, status) {
-                    setTimeout(function () {
-                        bot.loadQrCode();
-                    }, 1000)
+                    bot.refresh();
                 }, "json")
             }
         });

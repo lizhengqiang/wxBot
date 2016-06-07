@@ -4,7 +4,7 @@ import "strconv"
 
 // 给公众号群发消息
 func (this *WeixinBot) mps(content string) {
-	if this.get("task") == TRUE {
+	if this.Get("task") == TRUE {
 		this.fileHelperResponse("请等待上次任务结束")
 		return
 	}

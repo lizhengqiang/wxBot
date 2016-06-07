@@ -35,7 +35,7 @@ func (bot *WeixinBot) WebWeixinSync() *WebWeixinSyncResponse {
 
 	response := &WebWeixinSyncResponse{}
 
-	u := fmt.Sprintf("/webwxsync?sid=%s&skey=%s&pass_ticket=%s", bot.get(wxsid), bot.get(skey), bot.get(passTicket))
+	u := fmt.Sprintf("/webwxsync?sid=%s&skey=%s&pass_ticket=%s", bot.Get(wxsid), bot.Get(skey), bot.Get(passTicket))
 	bot.PostJson(u, request, response)
 
 	if response.BaseResponse != nil && response.BaseResponse.Ret == 0 {
