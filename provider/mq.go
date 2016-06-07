@@ -1,4 +1,4 @@
-package mns
+package provider
 
 import (
 	"github.com/cocotyty/summer"

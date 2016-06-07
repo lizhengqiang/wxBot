@@ -59,12 +59,7 @@ func (this *WeixinBot) HandleMsg() (err error) {
 	}
 
 	this.Println("Unknown Selector", selector)
+	this.WebWeixinSync()
 	this.Idle()
 	return
-}
-
-func (this *WeixinBot) ListenMsgMode() {
-	for this.IsRunning() {
-
-	}
 }

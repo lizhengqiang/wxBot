@@ -2,29 +2,14 @@
 package bot
 
 import (
-	"fmt"
 	"github.com/cocotyty/json"
-	"strconv"
+	"github.com/cocotyty/summer"
 	"strings"
-	"time"
 )
 
 func (this *WeixinBot) fileHelperResponse(content string) {
-	clientMsgId := strconv.FormatInt(time.Now().Unix()*1000+time.Now().Unix(), 10)
-	request := SendMsgRequest{
-		BaseRequest: this.getBaseRequest(),
-		Msg: &Msg{
-			Type:         1,
-			Content:      "#Bot#" + content,
-			FromUserName: this.getMe().UserName,
-			ToUserName:   "filehelper",
-			LocalID:      clientMsgId,
-			ClientMsgId:  clientMsgId,
-		},
-	}
-	response := SendMsgResponse{}
-	this.PostJson(fmt.Sprintf("/webwxsendmsg?pass_ticket=%s", this.getProperty(passTicket)), request, &response)
-	this.Println("fileHelper", content)
+	this.SendMsg("#Bot#" + content, "filehelper")
+
 }
 
 func (this *WeixinBot) fileHelper(msg *AddMsg) {
@@ -53,5 +38,10 @@ func (this *WeixinBot) fileHelper(msg *AddMsg) {
 		go this.mps(strings.Replace(msg.Content, "mps ", "", -1))
 		return
 	}
+
+	// 转发消息
+	args := strings.Split(msg.Content, " ")
+	summer.GetStoneWithName("Trigger").(*Trigger).Send(this.ID, args[0], msg.Content)
+	return
 
 }

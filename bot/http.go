@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"strings"
-"net/url"
-"github.com/google/go-querystring/query"
+	"net/url"
+	"github.com/google/go-querystring/query"
 )
 
 func (bot *WeixinBot) SimplePostJson(uri string, params interface{}) (b []byte, err error) {
@@ -14,7 +14,7 @@ func (bot *WeixinBot) SimplePostJson(uri string, params interface{}) (b []byte, 
 	if paramsErr != nil {
 		return nil, paramsErr
 	}
-	resp, err := bot.httpClient.Post(bot.getProperty(baseUri)+uri, "application/json", bytes.NewReader(paramsBytes))
+	resp, err := bot.httpClient.Post(bot.getProperty(baseUri) + uri, "application/json", bytes.NewReader(paramsBytes))
 	if err != nil {
 		return nil, err
 	}

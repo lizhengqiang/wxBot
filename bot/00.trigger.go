@@ -1,20 +1,18 @@
-package mns
+package bot
 
 import (
 	"encoding/json"
 	"github.com/cocotyty/summer"
 	"github.com/gogap/ali_mns"
 	"qiniupkg.com/x/errors.v7"
-	"qiniupkg.com/x/log.v7"
 	"time"
-	"wxBot/bot"
 	"wxBot/provider"
 )
 
-type Handler func(*Trigger, *bot.WeixinBot, *Message)
+type Handler func(*Trigger, *WeixinBot, *provider.Message)
 type Trigger struct {
 	CacherFactory *provider.CacherFactory `sm:"*"`
-	MQ            *MQ                     `sm:"*"`
+	MQ            *provider.MQ            `sm:"*"`
 	handlers      map[string][]Handler
 }
 
@@ -39,7 +37,7 @@ func (this *Trigger) When(t string, h Handler) {
 }
 
 func (this *Trigger) Send(id, t string, body interface{}) (err error) {
-	msg := &Message{
+	msg := &provider.Message{
 		BotID: id,
 		Type:  t,
 		Body:  body,
@@ -48,25 +46,25 @@ func (this *Trigger) Send(id, t string, body interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	this.MQ.Send(bytes)
+	err = this.MQ.Send(bytes)
 	return
 
 }
 
 func (this *Trigger) handle(resp ali_mns.MessageReceiveResponse) (err error) {
-	theMsg := &Message{}
+	theMsg := &provider.Message{}
 	err = json.Unmarshal(resp.MessageBody, theMsg)
 	if err != nil {
 		return
 	}
-	log.Println(theMsg)
+
 	handlers, has := this.handlers[theMsg.Type]
 	if !has {
 		err = ErrNoHandler
 		return
 	}
 
-	theBot := bot.NewBot(theMsg.BotID, this.CacherFactory.NewCacher(theMsg.BotID))
+	theBot := NewBot(theMsg.BotID, this.CacherFactory.NewCacher(theMsg.BotID))
 
 	for _, h := range handlers {
 		h(this, theBot, theMsg)
@@ -82,25 +80,16 @@ func (this *Trigger) Ready() {
 		for {
 			select {
 			case resp := <-respChan:
+				go this.handle(resp)
+				this.MQ.Queue.DeleteMessage(resp.ReceiptHandle)
 
-				err := this.handle(resp)
-				if err != nil {
-					log.Println(err)
-				}
-
-				err = this.MQ.Queue.DeleteMessage(resp.ReceiptHandle)
-				if err != nil {
-					log.Println(err)
-				}
-
-			case err := <-errChan:
-				log.Println(err)
+			case _ = <-errChan:
 				this.idle()
 				continue
-				//if ali_mns.ERR_MNS_QUEUE_NOT_EXIST.IsEqual(err) {
-				//}
-				//if ali_mns.ERR_MNS_MESSAGE_NOT_EXIST.IsEqual(err) {
-				//}
+			//if ali_mns.ERR_MNS_QUEUE_NOT_EXIST.IsEqual(err) {
+			//}
+			//if ali_mns.ERR_MNS_MESSAGE_NOT_EXIST.IsEqual(err) {
+			//}
 			}
 		}
 	}()

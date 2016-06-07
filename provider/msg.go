@@ -1,4 +1,4 @@
-package mns
+package provider
 
 type Message struct {
 	BotID string

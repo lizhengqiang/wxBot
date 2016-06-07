@@ -1,10 +1,11 @@
 package bot
 
 import (
-	"strings"
-	"strconv"
-	"time"
 	"fmt"
+	"github.com/cocotyty/summer"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type AddMsg struct {
@@ -22,7 +23,6 @@ type Msg struct {
 	LocalID      string
 	ClientMsgId  string
 }
-
 
 func (this *WeixinBot) handleMsg(msgList []*AddMsg) {
 	for _, msg := range msgList {
@@ -55,26 +55,8 @@ func (this *WeixinBot) handleMsg(msgList []*AddMsg) {
 	}
 }
 
-func (this *WeixinBot) groupMessage(msg *AddMsg) {
-	contents := strings.Split(msg.Content, `:<br/>`)
-	var content string
-	var userName string
-	if len(contents) == 1 {
-		content = contents[0]
-	} else if len(contents) == 2 {
-		userName = contents[0]
-		content = contents[1]
-	} else {
-		content = msg.Content
-	}
 
-	this.Println(msg.FromUserName, userName, content)
 
-}
-
-func (this *WeixinBot) contactMessage(msg *AddMsg) {
-	this.Println(msg.FromUserName, msg.Content)
-}
 
 type SendMsgRequest struct {
 	BaseRequest *BaseRequest
@@ -85,8 +67,13 @@ type SendMsgResponse struct {
 	BaseResponse *BaseResponse
 }
 
-func (bot *WeixinBot) SendMsg(content, toUserName string) {
-	clientMsgId := strconv.FormatInt(time.Now().Unix() * 1000 + time.Now().Unix(), 10)
+type SendMsgBody struct {
+	Content    string `json:"content"`
+	ToUserName string `json:"toUserName"`
+}
+
+func (bot *WeixinBot) DoSendMsg(content, toUserName string) {
+	clientMsgId := strconv.FormatInt(time.Now().Unix()*1000+time.Now().Unix(), 10)
 	request := SendMsgRequest{
 		BaseRequest: bot.getBaseRequest(),
 		Msg: &Msg{
@@ -100,6 +87,8 @@ func (bot *WeixinBot) SendMsg(content, toUserName string) {
 	}
 	response := SendMsgResponse{}
 	bot.PostJson(fmt.Sprintf("/webwxsendmsg?pass_ticket=%s", bot.getProperty(passTicket)), request, &response)
-	// name := bot.GetRemarkName(toUserName)
 }
 
+func (this *WeixinBot) SendMsg(content, toUserName string) {
+	summer.GetStoneWithName("Trigger").(*Trigger).Send(this.ID, "sendMsg", &SendMsgBody{content, toUserName})
+}
