@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/cocotyty/summer"
-	"wxBot/api"
-	"wxBot/provider"
+	"github.com/lizhengqiang/wxBot/api"
+	"github.com/lizhengqiang/wxBot/provider"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"github.com/gogap/ali_mns"
 	"qiniupkg.com/x/errors.v7"
 	"time"
-	"wxBot/provider"
+	"github.com/lizhengqiang/wxBot/provider"
 )
 
 type Handler func(*Trigger, *WeixinBot, *provider.Message)

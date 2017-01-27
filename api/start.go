@@ -5,7 +5,7 @@ import (
 	"github.com/go-macaron/session"
 	"github.com/mougeli/beauty"
 	"gopkg.in/macaron.v1"
-	"wxBot/bot"
+	"github.com/lizhengqiang/wxBot/bot"
 )
 
 func Start(ctx *macaron.Context, sess session.Store, b *bot.WeixinBot, r beauty.Render) {

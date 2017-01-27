@@ -5,9 +5,9 @@ import (
 	"github.com/go-macaron/cache"
 	"github.com/go-macaron/session"
 	"gopkg.in/macaron.v1"
-	"wxBot/bot"
+	"github.com/lizhengqiang/wxBot/bot"
 	"github.com/cocotyty/summer"
-	"wxBot/provider"
+	"github.com/lizhengqiang/wxBot/provider"
 )
 
 

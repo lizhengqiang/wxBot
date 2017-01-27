@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"wxBot/provider"
+	"github.com/lizhengqiang/wxBot/provider"
 )
 
 func (this *Trigger) Router() {
