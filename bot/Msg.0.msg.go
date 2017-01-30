@@ -70,7 +70,9 @@ type SendMsgBody struct {
 }
 
 func (bot *WeixinBot) DoSendMsg(content, toUserName string) {
-	clientMsgId := strconv.FormatInt(time.Now().Unix()*1000+time.Now().Unix(), 10)
+
+
+	clientMsgId := strconv.FormatInt(time.Now().Unix()*1000+time.Now().UnixNano(), 10)
 	request := SendMsgRequest{
 		BaseRequest: bot.getBaseRequest(),
 		Msg: &Msg{
@@ -84,6 +86,9 @@ func (bot *WeixinBot) DoSendMsg(content, toUserName string) {
 	}
 	response := SendMsgResponse{}
 	bot.PostJson(fmt.Sprintf("/webwxsendmsg?pass_ticket=%s", bot.getProperty(passTicket)), request, &response)
+
+
+	bot.Idle()
 }
 
 func (bot *WeixinBot) SendMsg(content, toUserName string) {

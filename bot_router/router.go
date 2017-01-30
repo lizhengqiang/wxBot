@@ -83,12 +83,7 @@ func (r *Router) Ready() {
 
 		b.ReloadJS()
 
-		t.Send(b.ID, "contact", nil)
-		t.Send(b.ID, "handleMsg", nil)
-		t.Send(b.ID, "handleMsg", nil)
-		t.Send(b.ID, "handleMsg", nil)
-		t.Send(b.ID, "handleMsg", nil)
-		t.Send(b.ID, "handleMsg", nil)
+		b.ListenMode()
 
 		return
 	})

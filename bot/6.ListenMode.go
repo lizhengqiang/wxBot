@@ -17,16 +17,16 @@ var (
 )
 
 func (bot *WeixinBot) ListenMode() {
-	// 非正常运行时关闭
-	if !bot.IsRunning() || !bot.IsSigned() {
-		return
-	}
-
 	// 防止打开多个监听
 	if !bot.IsLoopRunning {
 		bot.IsLoopRunning = true
 		go func() {
 			for {
+				// 非正常运行时关闭
+				if !bot.IsRunning() || !bot.IsSigned() {
+					return
+				}
+
 				err := bot.HandleMsg()
 				if err != nil {
 					bot.IsLoopRunning = false
@@ -38,9 +38,7 @@ func (bot *WeixinBot) ListenMode() {
 }
 
 func (bot *WeixinBot) syncCheck() (retcode, selector int64, err error) {
-
 	hosts := map[string]interface{}{
-
 		"webpush.weixin.qq.com": nil,
 		"webpush.wechat.com":    nil,
 		"webpush1.wechat.com":   nil,
@@ -53,6 +51,7 @@ func (bot *WeixinBot) syncCheck() (retcode, selector int64, err error) {
 	if _, has := hosts[bot.getProperty(syncKeyHost)]; has {
 		hosts = map[string]interface{}{bot.getProperty(syncKeyHost): nil}
 	}
+
 	for host := range hosts {
 		retcode, selector, err = bot.SyncCheck(host)
 		log.Println("handleMsg", host, retcode, selector)
@@ -65,10 +64,12 @@ func (bot *WeixinBot) syncCheck() (retcode, selector int64, err error) {
 		bot.setProperty(syncKeyHost, host)
 		break
 	}
+
 	return
 }
 
 func (bot *WeixinBot) HandleNewMsg() (err error) {
+
 	msgList := bot.WebWeixinSync()
 	if msgList.AddMsgList == nil || len(msgList.AddMsgList) == 0 {
 		return
@@ -79,13 +80,13 @@ func (bot *WeixinBot) HandleNewMsg() (err error) {
 
 func (bot *WeixinBot) HandleMsg() (err error) {
 
-	log.Println("获取锁", "handleMsg")
+	log.Println("require", "handleMsg")
 	bot.rw.Lock()
 	defer func() {
-		log.Println("释放锁", "handleMsg")
+		log.Println("release", "handleMsg")
 		bot.rw.Unlock()
 	}()
-	log.Println("获取到了开干", "handleMsg")
+	log.Println("lock", "handleMsg")
 	retcode, selector, err := bot.syncCheck()
 	if err != nil || retcode >= 1100 {
 		bot.Set(IsRunning, FALSE)
