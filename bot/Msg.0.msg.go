@@ -2,7 +2,7 @@ package bot
 
 import (
 	"fmt"
-	"github.com/cocotyty/summer"
+	"github.com/lizhengqiang/wxBot/domain"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +24,7 @@ type Msg struct {
 	ClientMsgId  string
 }
 
-func (this *WeixinBot) handleMsg(msgList []*AddMsg) {
+func (bot *WeixinBot) handleMsg(msgList []*AddMsg) {
 	for _, msg := range msgList {
 		// 机器人保留
 		if strings.Contains(msg.Content, "#Bot#") {
@@ -33,30 +33,27 @@ func (this *WeixinBot) handleMsg(msgList []*AddMsg) {
 
 		// 文件助手
 		if msg.ToUserName == "filehelper" {
-			this.fileHelper(msg)
+			bot.fileHelper(msg)
 			continue
 		}
 
 		// 自己的
-		if msg.FromUserName == this.GetMe().UserName {
+		if msg.FromUserName == bot.GetMe().UserName {
 
 			continue
 		}
 
 		// 群消息
 		if strings.Contains(msg.FromUserName, "@@") {
-			this.groupMessage(msg)
+			bot.groupMessage(msg)
 			continue
 
 		}
 
 		// 用户消息
-		this.contactMessage(msg)
+		bot.contactMessage(msg)
 	}
 }
-
-
-
 
 type SendMsgRequest struct {
 	BaseRequest *BaseRequest
@@ -89,6 +86,10 @@ func (bot *WeixinBot) DoSendMsg(content, toUserName string) {
 	bot.PostJson(fmt.Sprintf("/webwxsendmsg?pass_ticket=%s", bot.getProperty(passTicket)), request, &response)
 }
 
-func (this *WeixinBot) SendMsg(content, toUserName string) {
-	summer.GetStoneWithName("Trigger").(*Trigger).Send(this.ID, "sendMsg", &SendMsgBody{content, toUserName})
+func (bot *WeixinBot) SendMsg(content, toUserName string) {
+	bot.MQ.Send(&domain.Message{
+		BotID: bot.ID,
+		Type:  "sendMsg",
+		Body:  &SendMsgBody{content, toUserName},
+	})
 }

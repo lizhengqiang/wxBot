@@ -1,8 +1,8 @@
 package bot
 
-func (this *WeixinBot) FindMp(username string) *Contact {
+func (bot *WeixinBot) FindMp(username string) *Contact {
 	mps := []*Contact{}
-	this.unmarshal(mpList, &mps)
+	bot.unmarshal(mpList, &mps)
 
 	for _, contact := range mps {
 		if contact.UserName == username {

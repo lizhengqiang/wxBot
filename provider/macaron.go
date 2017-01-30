@@ -12,6 +12,7 @@ import (
 	_ "github.com/go-macaron/session/redis"
 	"github.com/mougeli/beauty"
 	"os"
+	"log"
 )
 
 type HttpServer struct {
@@ -35,10 +36,16 @@ func (this *HttpServer) Ready() {
 		AdapterConfig: this.CacheRedisConf,
 	}
 
-	m := macaron.Classic()
+	m := macaron.New()
+	m.Use(macaron.Recovery())
+	m.Use(macaron.Static("public"))
 	m.Use(macaron.Renderer())
 	m.Use(session.Sessioner(opt))
 	m.Use(cache.Cacher(cacheOpt))
+	//m.Use(macaron.Logger())
+	m.Use(func(ctx *macaron.Context, log *log.Logger) {
+
+	})
 
 	// ! 另一个开源项目,API使用的,可以美化一下输出, github.com/mougeli/beauty
 	m.Use(beauty.Renderer())

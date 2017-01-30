@@ -3,6 +3,7 @@ package bot
 import (
 	"golang.org/x/net/html"
 	"strings"
+	"github.com/qiniu/log"
 )
 
 func init() {
@@ -29,6 +30,7 @@ type LoginHtml struct {
 
 // 登陆
 func (bot *WeixinBot) Login() error {
+	log.Println(bot.getProperty("redirectUri"))
 	resp, err := bot.httpClient.Get(bot.getProperty("redirectUri"))
 
 	if err != nil {
@@ -42,6 +44,7 @@ func (bot *WeixinBot) Login() error {
 
 	// 卧槽 这地下是要解析HTML呀
 	doc, err := html.Parse(resp.Body)
+
 	if err != nil {
 		bot.Println(err.Error())
 		return ErrDoLogin
@@ -52,9 +55,12 @@ func (bot *WeixinBot) Login() error {
 	f = func(n *html.Node) {
 		name := strings.TrimSpace(n.Data)
 		data := ""
+
 		if n.FirstChild != nil {
 			data = strings.TrimSpace(n.FirstChild.Data)
 		}
+
+		log.Println("loginHomePage", name, data)
 
 		if name == "skey" {
 			bot.setProperty(skey, data)

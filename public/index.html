@@ -29,8 +29,8 @@
                 <a class="header">{{status.me.NickName}}</a>
                 <a class="header">当前状态:{{status.status}}</a>
             </div>
-            <div class="image">
-                <img v-bind:src="qrcode">
+            <div class="image"  v-if="status.isRunning && !status.isLoopRunning">
+                <img v-bind:src="qrcode" >
             </div>
 
             <div class="content">

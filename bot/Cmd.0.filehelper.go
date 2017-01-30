@@ -3,45 +3,53 @@ package bot
 
 import (
 	"github.com/cocotyty/json"
-	"github.com/cocotyty/summer"
 	"strings"
 )
 
-func (this *WeixinBot) fileHelperResponse(content string) {
-	this.SendMsg("#Bot#" + content, "filehelper")
+func (bot *WeixinBot) fileHelperResponse(content string) {
+	bot.SendMsg("#Bot#"+content, "filehelper")
 
 }
 
-func (this *WeixinBot) fileHelper(msg *AddMsg) {
+func (bot *WeixinBot) fileHelper(msg *AddMsg) {
 	if msg.Content == "me" {
-		bytes, _ := json.MarshalIndent(this.GetMe(), "", "  ")
-		this.fileHelperResponse(string(bytes))
+		bytes, _ := json.MarshalIndent(bot.GetMe(), "", "  ")
+		bot.fileHelperResponse(string(bytes))
 		return
 	}
-
+	if msg.Content == "stop" {
+		bot.Set(IsRunning, FALSE)
+		bot.IsLoopRunning = false
+	}
+	if msg.Content == "reload" {
+		bot.ReloadJS()
+		return
+	}
 	if msg.Content == "logs" {
-		this.fileHelperResponse(this.Cacher.Get("logs"))
+		bot.fileHelperResponse(bot.Cacher.Get("logs"))
 		return
 	}
 
 	if msg.Content == "now" {
-		this.fileHelperResponse(this.Get("status"))
+		bot.fileHelperResponse(bot.Get("status"))
 		return
 	}
 
 	if msg.Content == "mps" {
-		this.fileHelperResponse(this.Get(mpList))
+		bot.fileHelperResponse(bot.Get(mpList))
 		return
 	}
 
 	if strings.Contains(msg.Content, "mps") {
-		go this.mps(strings.Replace(msg.Content, "mps ", "", -1))
+		go bot.mps(strings.Replace(msg.Content, "mps ", "", -1))
 		return
 	}
 
-	// 转发消息
-	args := strings.Split(msg.Content, " ")
-	summer.GetStoneWithName("Trigger").(*Trigger).Send(this.ID, args[0], msg.Content)
+	if strings.Contains(msg.Content, "contacts") {
+		go bot.contacts(strings.Replace(msg.Content, "contacts ", "", -1))
+		return
+	}
+
 	return
 
 }

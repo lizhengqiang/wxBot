@@ -2,7 +2,7 @@ package bot
 
 import "strings"
 
-func (this *WeixinBot) groupMessage(msg *AddMsg) {
+func (bot *WeixinBot) groupMessage(msg *AddMsg) {
 	contents := strings.Split(msg.Content, `:<br/>`)
 	var content string
 	var userName string
@@ -14,20 +14,22 @@ func (this *WeixinBot) groupMessage(msg *AddMsg) {
 	} else {
 		content = msg.Content
 	}
+	me := bot.GetMe()
+	bot.WebWeixinStatusNotify(me.UserName, msg.FromUserName, 1)
 
-	if userName == this.GetMe().UserName {
+	if userName == bot.GetMe().UserName {
 		return
 	}
 
-	if this.getProperty("tuling.group") == TRUE {
-		r, err := this.callTuling(msg.Content, msg.FromUserName)
+	if bot.getProperty("tuling.group") == TRUE {
+		r, err := bot.callTuling(msg.Content, msg.FromUserName)
 		if err != nil {
 			return
 		}
-		this.SendMsg(r, msg.FromUserName)
+		bot.SendMsg(r, msg.FromUserName)
 	}
+	bot.Hear(msg.FromUserName, userName, content)
 
-	this.Println(msg.FromUserName, userName, content)
+	bot.Println(msg.FromUserName, userName, content)
 
 }
-

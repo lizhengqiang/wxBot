@@ -1,48 +1,114 @@
 package provider
 
 import (
+	"encoding/json"
 	"github.com/cocotyty/summer"
 	"github.com/gogap/ali_mns"
+	"github.com/lizhengqiang/wxBot/domain"
 	"os"
-	"qiniupkg.com/x/log.v7"
+	"time"
 )
 
-type MQ struct {
+type AliMQ struct {
 	AccessKey string
 	SecretKey string
 	MnsUrl    string
 	QueueName string
 	Queue     ali_mns.AliMNSQueue
 	Client    ali_mns.MNSClient
+	Log       *summer.SimpleLog
+
+	handlers []domain.MessageHandler
 }
 
-func (this *MQ) Init() {
-	this.AccessKey = os.Getenv("aliyun.accessKey")
-	this.SecretKey = os.Getenv("aliyun.secretKey")
-	this.MnsUrl = os.Getenv("mq.url")
-	this.QueueName = os.Getenv("mq.queue")
-}
+func (p *AliMQ) Init() {
+	p.Log = summer.NewSimpleLog("AliMessageQueue", summer.DebugLevel)
+	p.AccessKey = os.Getenv("aliyun.accessKey")
+	p.SecretKey = os.Getenv("aliyun.secretKey")
+	p.MnsUrl = os.Getenv("mq.url")
+	p.QueueName = os.Getenv("mq.queue")
 
-func (this *MQ) Ready() {
-	log.Println(this.MnsUrl, this.AccessKey, this.SecretKey)
-	this.Client = ali_mns.NewAliMNSClient(this.MnsUrl, this.AccessKey, this.SecretKey)
-	this.Queue = ali_mns.NewMNSQueue(this.QueueName, this.Client)
+	p.handlers = []domain.MessageHandler{}
 }
-func (this *MQ) Send(body []byte) (err error) {
+func (p *AliMQ) MNSSend(body []byte) (err error) {
 	msg := ali_mns.MessageSendRequest{
 		MessageBody:  body,
 		DelaySeconds: 0,
 		Priority:     8,
 	}
-	_, err = this.Queue.SendMessage(msg)
+	_, err = p.Queue.SendMessage(msg)
 	return
 }
 
-func (this *MQ) Recv(respChan chan ali_mns.MessageReceiveResponse, errChan chan error) (err error) {
-	go this.Queue.ReceiveMessage(respChan, errChan)
+func (p *AliMQ) handle(resp ali_mns.MessageReceiveResponse) (err error) {
+	msg := &domain.Message{}
+	err = json.Unmarshal(resp.MessageBody, msg)
+	if err != nil {
+		return
+	}
+	p.Log.Info("handle", msg, p.handlers)
+
+	for _, h := range p.handlers {
+		err = h(msg)
+		if err != nil {
+			return
+		}
+	}
 	return
+}
+
+func (p *AliMQ) idle() {
+	time.Sleep(1 * time.Second)
+}
+
+func (p *AliMQ) handleAndDel(resp ali_mns.MessageReceiveResponse) {
+	err := p.handle(resp)
+	if err != nil {
+		return
+	}
+	p.Queue.DeleteMessage(resp.ReceiptHandle)
+}
+
+func (p *AliMQ) Ready() {
+	p.Client = ali_mns.NewAliMNSClient(p.MnsUrl, p.AccessKey, p.SecretKey)
+	p.Queue = ali_mns.NewMNSQueue(p.QueueName, p.Client)
+	respChan := make(chan ali_mns.MessageReceiveResponse)
+	errChan := make(chan error)
+	go p.Queue.ReceiveMessage(respChan, errChan)
+	go func() {
+		for {
+			select {
+			case resp := <-respChan:
+				go p.handleAndDel(resp)
+
+			case _ = <-errChan:
+				p.idle()
+				continue
+				//if ali_mns.ERR_MNS_QUEUE_NOT_EXIST.IsEqual(err) {
+				//}
+				//if ali_mns.ERR_MNS_MESSAGE_NOT_EXIST.IsEqual(err) {
+				//}
+			}
+		}
+	}()
+	return
+}
+
+func (p *AliMQ) Send(msg *domain.Message) (err error) {
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+	err = p.MNSSend(bytes)
+	p.Log.Info("Send", string(bytes), err)
+	return
+}
+
+func (p *AliMQ) RegisterHandler(handler domain.MessageHandler) (err error) {
+	p.handlers = append(p.handlers, handler)
+	return nil
 }
 
 func init() {
-	summer.Add("MQ", &MQ{})
+	summer.Add("AliMQ", &AliMQ{})
 }

@@ -14,11 +14,11 @@ func init() {
 }
 
 var (
-	ErrLoginReq error = errors.New("登录请求出错")
-	ErrLoginFailed error = errors.New("登录失败")
+	ErrLoginReq     error = errors.New("登录请求出错")
+	ErrLoginFailed  error = errors.New("登录失败")
 	ErrLoginCancels error = errors.New("登陆被取消")
-	ErrDoLogin error = errors.New("机器人登录时出错")
-	WaitScanQRCode = errors.New("等待扫描")
+	ErrDoLogin      error = errors.New("机器人登录时出错")
+	WaitScanQRCode        = errors.New("等待扫描")
 )
 
 func (bot *WeixinBot) checkQRCodeScanStatus(tip, uuid string) (all [][]byte, body []byte, err error) {
@@ -38,13 +38,13 @@ func (bot *WeixinBot) checkQRCodeScanStatus(tip, uuid string) (all [][]byte, bod
 	return
 }
 
-func (this *WeixinBot)HandleQRCodeScanStatus() (err error) {
-	this.Println("等待QRCode扫描")
+func (bot *WeixinBot) HandleQRCodeScanStatus() (err error) {
+	bot.Println("等待QRCode扫描")
 	// 获取登陆返回值
-	all, body, err := this.checkQRCodeScanStatus(this.getProperty(tip), this.getProperty(UUID))
+	all, body, err := bot.checkQRCodeScanStatus(bot.getProperty(tip), bot.getProperty(UUID))
 
 	if err != nil {
-		this.log("登录时出错")
+		bot.log("登录时出错")
 		err = ErrLoginReq
 		return
 	}
@@ -53,8 +53,8 @@ func (this *WeixinBot)HandleQRCodeScanStatus() (err error) {
 		code := string(all[1])
 
 		if code == "201" {
-			this.setProperty(tip, "0")
-			this.Println("* 成功扫描,请在手机上点击确认以登录.")
+			bot.setProperty(tip, "0")
+			bot.Println("* 成功扫描,请在手机上点击确认以登录.")
 			err = WaitScanQRCode
 			return
 		}
@@ -64,20 +64,20 @@ func (this *WeixinBot)HandleQRCodeScanStatus() (err error) {
 			allRedirectUri := reRedirectUri.FindSubmatch(body)
 			if len(allRedirectUri) >= 2 {
 				redirectUri := string(allRedirectUri[1]) + "&fun=new"
-				this.setProperty("redirectUri", redirectUri)
-				this.setProperty("baseUri", string([]byte(redirectUri)[0:strings.LastIndex(redirectUri, "/")]))
+				bot.setProperty("redirectUri", redirectUri)
+				bot.setProperty("baseUri", string([]byte(redirectUri)[0:strings.LastIndex(redirectUri, "/")]))
 			}
-			this.log("* 登陆成功.")
+			bot.log("* 登陆成功.")
 			return
 		}
 
 		if code == "408" {
-			this.log("! 登陆超时.")
+			bot.log("! 登陆超时.")
 			err = WaitScanQRCode
 			return
 		}
 
-		this.log("! 登录失败 %s", code)
+		bot.log("! 登录失败 %s", code)
 		err = ErrLoginFailed
 		return
 
@@ -93,40 +93,43 @@ func (bot *WeixinBot) GetQrcodeUrl() string {
 }
 
 //等待登陆
-func (this *WeixinBot) waitForScanQrcode() (err error) {
-	for this.IsRunning() {
-		this.HandleQRCodeScanStatus()
+func (bot *WeixinBot) waitForScanQrcode() (err error) {
+	for bot.IsRunning() {
+		bot.HandleQRCodeScanStatus()
 		time.Sleep(time.Second * 3)
 	}
-	this.Println(this.IsRunning())
+	bot.Println(bot.IsRunning())
 	return ErrLoginCancels
 
 }
 
-func (this *WeixinBot) scanForLogin() (err error) {
+func (bot *WeixinBot) scanForLogin() (err error) {
 
 	// 等待登陆
-	err = this.waitForScanQrcode()
+	err = bot.waitForScanQrcode()
 	if err != nil {
-		this.Println(err)
+		bot.Println(err)
 		return
 	}
 
 	// 登陆
-	err = this.Login()
+	err = bot.Login()
 	if err != nil {
-		this.Println("登陆失败. ")
+		bot.Println("登陆失败. ")
 		return
 	}
 
 	// 初始化信息
-	this.InitWebWeixin()
+	bot.InitWebWeixin()
 
-	this.Println("初始化信息完毕")
+	bot.Println("初始化信息完毕")
 
-	this.WebWeixinStatusNotify()
+	my := &User{}
+	bot.unmarshal(me, my)
 
-	this.Println("初始化信息完毕")
+	bot.WebWeixinStatusNotify(my.UserName, my.UserName, 3)
+
+	bot.Println("初始化信息完毕")
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"github.com/qiniu/log"
 )
 
 type InitWebWeixinRequestBody struct {
@@ -17,19 +18,19 @@ type InitWebWeixinResponseBody struct {
 	User         *User
 }
 
-func (this *WeixinBot) InitWebWeixin() int64 {
+func (bot *WeixinBot) InitWebWeixin() int64 {
 	requestBody := InitWebWeixinRequestBody{
-		BaseRequest: this.getBaseRequest(),
+		BaseRequest: bot.getBaseRequest(),
 	}
-	u := fmt.Sprintf("/webwxinit?pass_ticket=%s&skey=%s&r=%s", this.getProperty(passTicket), this.getProperty(skey), this.timestamp())
+	u := fmt.Sprintf("/webwxinit?pass_ticket=%s&skey=%s&r=%s", bot.getProperty(passTicket), bot.getProperty(skey), bot.timestamp())
 
 	respJson := &InitWebWeixinResponseBody{}
 
-	this.PostJson(u, requestBody, respJson)
+	bot.PostJson(u, requestBody, respJson)
 
-	this.marshal(me, respJson.User)
+	bot.marshal(me, respJson.User)
 
-	this.saveSyncKey(respJson.SyncKey)
+	bot.saveSyncKey(respJson.SyncKey)
 
 	return respJson.BaseResponse.Ret
 
@@ -49,16 +50,18 @@ type WebWeixinStatusNotifyResponseBody struct {
 
 var ErrStatusNotify error = errors.New("检查状态出错")
 
-func (bot *WeixinBot) WebWeixinStatusNotify() (err error) {
+func (bot *WeixinBot) WebWeixinStatusNotify(from, to string, code int64) (err error) {
 	my := &User{}
 	bot.unmarshal(me, my)
 	requestBody := WebWeixinStatusNotifyRequest{
 		BaseRequest:  bot.getBaseRequest(),
-		Code:         int64(3),
-		FromUserName: my.UserName,
-		ToUserName:   my.UserName,
+		Code:         code,
+		FromUserName: from,
+		ToUserName:   to,
 		ClientMsgId:  time.Now().Unix(),
 	}
+
+	log.Println(bot.getProperty(baseUri))
 
 	respBody, _ := bot.SimplePostJson(fmt.Sprintf("/webwxstatusnotify?lang=zh_CN&pass_ticket=%s", bot.getProperty(passTicket)), requestBody)
 	respJson := WebWeixinStatusNotifyResponseBody{}

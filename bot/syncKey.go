@@ -13,23 +13,22 @@ var (
 	ErrSyncCheck error = errors.New("SyncCheck失败")
 )
 
-
 type SyncCheckResponseBody struct {
 	retcode  int64
 	selector int64
 }
 
 // 保存微信返回的SyncKey
-func (this *WeixinBot) saveSyncKey(theSyncKey *SyncKey) {
-	this.marshal(syncKey, theSyncKey)
+func (bot *WeixinBot) saveSyncKey(theSyncKey *SyncKey) {
+	bot.marshal(syncKey, theSyncKey)
 	syncKeyList := make([]string, theSyncKey.Count)
 	for i, v := range theSyncKey.List {
 		syncKeyList[i] = strconv.FormatInt(v.Key, 10) + "_" + strconv.FormatInt(v.Val, 10)
 	}
-	this.setProperty(syncKeyString, strings.Join(syncKeyList, "|"))
+	bot.setProperty(syncKeyString, strings.Join(syncKeyList, "|"))
 }
 
-func (bot *WeixinBot) SyncCheck() (retcode, selector int64, err error) {
+func (bot *WeixinBot) SyncCheck(host string) (retcode, selector int64, err error) {
 	queryValues := url.Values{}
 	queryValues.Add("synckey", bot.getProperty(syncKeyString))
 	queryValues.Add("skey", bot.getProperty(skey))
@@ -38,7 +37,7 @@ func (bot *WeixinBot) SyncCheck() (retcode, selector int64, err error) {
 	queryValues.Add("deviceid", bot.getProperty(deviceId))
 	queryValues.Add("sid", bot.getProperty(wxsid))
 	queryValues.Add("_", bot.timestamp())
-	u := "https://webpush.weixin.qq.com/cgi-bin/mmwebwx-bin/synccheck?" + queryValues.Encode()
+	u := "https://" + host + "/cgi-bin/mmwebwx-bin/synccheck?" + queryValues.Encode()
 	resp, err := bot.httpClient.Get(u)
 	if err != nil {
 		bot.log(err.Error())

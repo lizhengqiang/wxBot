@@ -7,12 +7,12 @@ import (
 	"strings"
 )
 
-func (this *WeixinBot) Tuling(content string) {
+func (bot *WeixinBot) Tuling(content string) {
 	args := strings.Split(content, " ")
-	this.setProperty("tuling.contact", args[1])
-	this.setProperty("tuling.group", args[2])
-	this.setProperty("tuling.mp", args[3])
-	this.fileHelperResponse("联系人:" + args[1] + ",群:" + args[2] + ",公众号:" + args[3])
+	bot.setProperty("tuling.contact", args[1])
+	bot.setProperty("tuling.group", args[2])
+	bot.setProperty("tuling.mp", args[3])
+	bot.fileHelperResponse("联系人:" + args[1] + ",群:" + args[2] + ",公众号:" + args[3])
 }
 
 type turingReq struct {
@@ -25,7 +25,7 @@ type turingResp struct {
 	Text string `json:"text"`
 }
 
-func (this *WeixinBot) callTuling(content, username string) (r string, err error) {
+func (bot *WeixinBot) callTuling(content, username string) (r string, err error) {
 	req := &turingReq{Info: content, Key: "4aa2411ed509a4f7209d95b7ee4dfc9a", UserID: username}
 	tResp := &turingResp{}
 	buf := bytes.NewBuffer(nil)

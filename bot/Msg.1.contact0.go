@@ -1,18 +1,18 @@
 package bot
 
-func (this *WeixinBot) contactMessage(msg *AddMsg) {
+func (bot *WeixinBot) contactMessage(msg *AddMsg) {
 
-	if mp := this.FindMp(msg.FromUserName); mp != nil {
-		this.mpMessage(msg, mp)
+	if mp := bot.FindMp(msg.FromUserName); mp != nil {
+		bot.mpMessage(msg, mp)
 		return
 	}
-	if this.getProperty("tuling.contact") == TRUE {
-		r, err := this.callTuling(msg.Content, msg.FromUserName)
+	if bot.getProperty("tuling.contact") == TRUE {
+		r, err := bot.callTuling(msg.Content, msg.FromUserName)
 		if err != nil {
 			return
 		}
-		this.SendMsg(r, msg.FromUserName)
+		bot.SendMsg(r, msg.FromUserName)
 	}
 
-	this.Println(msg.FromUserName, msg.Content)
+	bot.Println(msg.FromUserName, msg.Content)
 }

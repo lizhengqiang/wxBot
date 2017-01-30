@@ -4,6 +4,6 @@ import "time"
 
 const IdleDuration = 1 * time.Second
 
-func (this *WeixinBot) Idle() {
+func (bot *WeixinBot) Idle() {
 	time.Sleep(IdleDuration)
 }

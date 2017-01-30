@@ -7,9 +7,9 @@ import (
 )
 
 // 写入日志
-func (this *WeixinBot) appendLog(log string) {
+func (bot *WeixinBot) appendLog(log string) {
 	var logs []string
-	str := this.Cacher.Get("logs")
+	str := bot.Cacher.Get("logs")
 	err := json.Unmarshal([]byte(str), logs)
 	if err != nil {
 		logs = []string{}
@@ -18,23 +18,23 @@ func (this *WeixinBot) appendLog(log string) {
 
 	bytes, err := json.Marshal(logs)
 	if err == nil {
-		this.Cacher.Set("logs", string(bytes))
+		bot.Cacher.Set("logs", string(bytes))
 	}
 
 }
 
-func (this *WeixinBot) Println(v ...interface{}) {
+func (bot *WeixinBot) Println(v ...interface{}) {
 	log.Println(v...)
-	this.appendLog(fmt.Sprintln(v...))
+	bot.appendLog(fmt.Sprintln(v...))
 }
 
 // 记录一条日志
-func (this *WeixinBot) log(format string, v ...interface{}) {
+func (bot *WeixinBot) log(format string, v ...interface{}) {
 	if len(v) > 0 {
 		log.Printf(format+"\n", v...)
-		this.appendLog(fmt.Sprintf(format, v...))
+		bot.appendLog(fmt.Sprintf(format, v...))
 	} else {
 		log.Printf(format + "\n")
-		this.appendLog(fmt.Sprintf(format))
+		bot.appendLog(fmt.Sprintf(format))
 	}
 }

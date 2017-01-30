@@ -7,7 +7,7 @@ import (
 	"github.com/lizhengqiang/wxBot/bot"
 )
 
-func GetQrCodeUrl(ctx *macaron.Context, sess session.Store, b *bot.WeixinBot, r beauty.Render) {
+ func (router *Router)GetQrCodeUrl(ctx *macaron.Context, sess session.Store, b *bot.WeixinBot, r beauty.Render) {
 	// 清理掉上次的
 	r.OK(b.GetQrcodeUrl())
 }

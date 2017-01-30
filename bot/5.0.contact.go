@@ -21,7 +21,7 @@ type GetContactResponse struct {
 }
 
 // 获取联系人列表
-func (this *WeixinBot) GetContact() error {
+func (bot *WeixinBot) GetContact() error {
 	mps := []*Contact{}
 	groups := []*Contact{}
 	contacts := []*Contact{}
@@ -29,12 +29,12 @@ func (this *WeixinBot) GetContact() error {
 	// SpecialUsers := []string{"newsapp", "fmessage", "filehelper", "weibo", "qqmail", "fmessage", "tmessage", "qmessage", "qqsync", "floatbottle", "lbsapp", "shakeapp", "medianote", "qqfriend", "readerapp", "blogapp", "facebookapp", "masssendapp", "meishiapp", "feedsapp", "voip", "blogappweixin", "weixin", "brandsessionholder", "weixinreminder", "wxid_novlwrv3lqwv11", "gh_22b87fa7cb3c", "officialaccounts", "notification_messages", "wxid_novlwrv3lqwv11", "gh_22b87fa7cb3c", "wxitil", "userexperience_alarm", "notification_messages"}
 	response := &GetContactResponse{}
 	queryValues := &url.Values{}
-	queryValues.Add(passTicket, this.getProperty(passTicket))
-	queryValues.Add(skey, this.getProperty(skey))
-	queryValues.Add("r", this.timestamp())
-	// fmt.Sprintf("/webwxgetcontact?pass_ticket=%s&skey=%s&r=%s", this.getProperty(passTicket), this.getProperty(skey), this.timestamp())
+	queryValues.Add(passTicket, bot.getProperty(passTicket))
+	queryValues.Add(skey, bot.getProperty(skey))
+	queryValues.Add("r", bot.timestamp())
+	// fmt.Sprintf("/webwxgetcontact?pass_ticket=%s&skey=%s&r=%s", bot.getProperty(passTicket), bot.getProperty(skey), bot.timestamp())
 	u := "/webwxgetcontact?" + queryValues.Encode()
-	this.PostJson(u, &EmptyRequest{}, response)
+	bot.PostJson(u, &EmptyRequest{}, response)
 	// 处理好友信息
 	for _, contact := range response.MemberList {
 
@@ -51,13 +51,13 @@ func (this *WeixinBot) GetContact() error {
 			continue
 		}
 	}
-	this.marshal(memberList, response.MemberList)
-	this.marshal(groupList, groups)
-	this.marshal(mpList, mps)
-	this.Println(mps)
-	this.Println(this.Get(mpList))
-	this.marshal(contactList, contacts)
-	this.Println("联系人信息获取完毕")
+	bot.marshal(memberList, response.MemberList)
+	bot.marshal(groupList, groups)
+	bot.marshal(mpList, mps)
+	bot.Println(mps)
+	bot.Println(bot.Get(mpList))
+	bot.marshal(contactList, contacts)
+	bot.Println("联系人信息获取完毕")
 	return nil
 }
 
